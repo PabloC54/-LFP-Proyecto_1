@@ -602,7 +602,6 @@ def SimpleSQL():
 
     while exit == False:
         query = input(">>")
-        query = query.lower()
         query = query.lower().split(" ") + [";"]
         print(query)
 
@@ -1264,7 +1263,7 @@ def SimpleSQL():
                             + "================================================="
                             + Cend
                         )
-                        print(error_msg)
+                        print(Cbegin+error_msg+Cend)
                         print(
                             "\33[45m"
                             + "================================================="
