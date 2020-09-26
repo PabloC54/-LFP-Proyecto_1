@@ -1,0 +1,17 @@
+(
+    <
+        [nota] = 3,
+        [mensaje] = "lopezzz",
+        [activo] = true
+    >,
+    <
+        [nota] = 4.009,
+        [mensaje] = "ins",
+        [activo] = false
+    >,
+    <
+        [nota] = 9.64,
+        [mensaje] = "holi",
+        [activo] = true
+    >
+)

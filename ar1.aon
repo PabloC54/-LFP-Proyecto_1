@@ -1,0 +1,17 @@
+(
+    <
+        [nota] = 45.09,
+        [mensaje] = "hola mundo",
+        [activo] = true
+    >,
+    <
+        [nota] = 4,
+        [mensaje] = "adios mundo",
+        [activo] = false
+    >,
+    <
+        [nota] = 96.4,
+        [mensaje] = "este es otro ejemplo, las cadenas pueden ser muy largas",
+        [activo] = false
+    >
+)
