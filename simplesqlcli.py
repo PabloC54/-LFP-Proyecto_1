@@ -85,20 +85,6 @@ tk_texto = (
     + tk_coma[0]
     + tk_punto[0]
 )
-tk_color = [
-    "blue",
-    "red",
-    "green",
-    "yellow",
-    "orange",
-    "pink",
-    "azul",
-    "rojo",
-    "verde",
-    "amarillo",
-    "naranja",
-    "rosa",
-]
 
 # Comandos
 
