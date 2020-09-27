@@ -2,8 +2,9 @@ import webbrowser
 
 # Inicializando
 
-Cbegin = "\33[37m"
-Cend = "\33[0m"
+Cbegin = "\x1b[0;37;40m"
+Cend = "\x1b[0m"
+Hcolor = "\x1b[1;30;47m"
 
 set_names = []
 set_files = []
@@ -101,11 +102,14 @@ tk_color = [
     "yellow",
     "orange",
     "pink",
+    "white",
     "azul",
     "rojo",
     "verde",
     "amarillo",
     "naranja",
+    "rosa",
+    "blanco"
 ]
 
 # Comandos
@@ -113,18 +117,20 @@ tk_color = [
 
 def Mensaje(texto):
 
-    print(
-        "\x1b[2;30;41m"
-        + ">>>>>>>>>>>>>"
-        + Cend
-        + "  "
-        + Cbegin
-        + texto
-        + Cend
-        + "  \x1b[2;30;41m"
-        + "<<<<<<<<<<<<<"
-        + Cend
-    )
+    if texto:
+        print(
+            "\x1b[0;30;41m"
+            + ">>>>>>>>>>>>>"
+            + Cend
+            + "  "
+            + Cbegin
+            + texto
+            + Cend
+            + "  \x1b[0;30;41m"
+            + "<<<<<<<<<<<<<"
+            + Cend
+            + "\n"
+        )
 
 
 def Ayuda(word):
@@ -234,78 +240,159 @@ def Load(nombre, archivos):
 
 
 def Use(nombre):
-    global selected_set
 
+    global selected_set
     seleted_set = set_files[set_names.index(nombre)]
 
 
-def Select(lista_llaves, lista_condiciones):
+def Select(lista_llaves, condicion, conjuncion):
+    print(lista_llaves, condicion, conjuncion)
 
     global selected_set
-
-    seleccionar_todo = False
-    if lista_llaves == ["*"]:
-        seleccionar_todo = True
-
-    print("---")
-    # CONDICION
-
-    # try:
-    # key = condicion[0].strip()
-    # value = condicion[1].strip()
-
-    # if (value[0] == '"' and value[-1] == '"') or (
-    #     value[0] == "'" and value[-1] == "'"
-    # ):
-    #     value = value[1:-1]
-    # else:
-    #     if "." in value:
-    #         value = float(value)
-    #     else:
-    #         if ("True" in value or "False" in value) or (
-    #             "true" in value or "false" in value
-    #         ):
-    #             value = bool(value)
-    #         else:
-    #             value = int(value)
-
-    # # except:
-    # print("Sintaxis errónea. [ parametro = condicion ]")
-
-    # SELECCION
+    lista_tuplas, lista_final = [], []
+    diccionario_prueba = {}
 
     try:
 
-        if seleccionar_todo == True:
-            lista_llaves = selected_set[0][0].keys()
+        if selected_set:  # Verificando si se seleccionó un set (Use)
+            diccionario_prueba = selected_set[0][0]
+        else:
+            Mensaje("No se ha seleccionado un set")
+            err += 1
 
-        header = "||"  # ENCABEZADO
+        if lista_llaves == ["*"]:  # Verificando si se ingresó '*'
+            lista_llaves = diccionario_prueba.keys()
+
+        for llave in lista_llaves:  # Removiendo los atributos que no existen
+            if llave not in diccionario_prueba:
+
+                lista_llaves.remove(llave)
+                Mensaje("Atributo '" + llave + "' no encontrado")
+
+        header = "    ||    "  # ENCABEZADO
         for llave in lista_llaves:
-            header = header + "  " + llave + "  ||"
-        print(header)
-        print("=" * len(header) + "\n")
+            header = header + llave + "    ||    "
+        print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
 
-        for (
-            archivo
-        ) in selected_set:  # Iterando en el set de archivos seleccionado con 'Use'
-        
+        if condicion:
+            rango = len(condicion) // 3
+        else:
+            rango = 1
+
+        for i in range(rango):
+
+            if condicion:
+                
+                condicion_llave = condicion[3 * i].strip()
+                condicion_operador = condicion[3 * i + 1].strip()
+                condicion_valor = condicion[3 * i + 2].strip()
+
+                if Numero(condicion_valor):
+                    condicion_valor = float(condicion_valor)
+
+                elif Booleano(condicion_valor) in [True, False]:
+                    condicion_valor = Booleano(condicion_valor)
+
+                else:
+                    condicion_valor=condicion_valor[1:-1]
+
+            tuplas = []
+
             for (
-                diccionario
-            ) in archivo:  # Iterando sobre cada diccionario de cada archivo
+                archivo
+            ) in selected_set:  # Iterando en el set de archivos seleccionado con 'Use'
+
+                for (
+                    diccionario
+                ) in archivo:  # Iterando sobre cada diccionario de cada archivo
+
+                    cumple_condicion = True
+
+                    if condicion:
+
+                        if condicion_operador in tk_igual:
+
+                            if diccionario[condicion_llave] == condicion_valor:
+                                pass
+                            else:
+                                cumple_condicion = False
+
+                        elif condicion_operador in tk_mayorQ:
+
+                            if diccionario[condicion_llave] > condicion_valor:
+                                pass
+                            else:
+                                cumple_condicion = False
+
+                        elif condicion_operador in tk_menorQ:
+
+                            if diccionario[condicion_llave] < condicion_valor:
+                                pass
+                            else:
+                                cumple_condicion = False
+
+                    if cumple_condicion:
+
+                        tupla = "    ||  "
+                        for llave in lista_llaves:
+
+                            tupla = tupla+ \
+                                str(diccionario[llave]) + "  ||  "
+
+                        tuplas.append(tupla)
+
+            lista_tuplas.append(tuplas)
+
+        if len(lista_tuplas) > 1:
             
-                tupla = "||"
+            if conjuncion in tk_and:
+                
+                for tupla in lista_tuplas[0]:
 
-                for llave in lista_llaves:
-                    tupla = tupla+"  " + str(diccionario[llave]) + "  ||"
+                    if tupla in lista_tuplas[1]:
+                        lista_final.append(tupla)
 
-                print(tupla)
+            elif conjuncion in tk_or:
+                
+                lista_final = lista_tuplas[0]
+                for tupla in lista_tuplas[1]:
 
-        print()
+                    if tupla not in lista_final:
+                        lista_final.append(tupla)
+               
+            elif conjuncion in tk_xor:
+                
+                lista_final = lista_tuplas[0]
+                for tupla in lista_tuplas[1]:
+
+                    if tupla not in lista_final:
+                        lista_final.append(tupla)
+
+                for tupla in lista_final:
+                    if tupla in lista_tuplas[0] and tupla in lista_tuplas[1]:
+                        lista_final.remove(tupla)
+
+            else:
+                lista_final = lista_tuplas[0]
+
+        else:
+            
+            lista_final = lista_tuplas[0]
+
+        if lista_final:
+            
+            for tupla in lista_final:
+                print(Cbegin + tupla + Cend)
+            print("\n"+Hcolor + "=" * len(header) +  Cend+"\n")
+
+
+        else:
+
+            print(Cbegin+" ~ " * (len(header)//3) + Cend)
+            print("\n"+Hcolor + "=" * len(header) +  Cend+"\n")
 
     except:
-        Mensaje(
-            "Sintaxis erronea para 'seleccionar'. Consulte 'ayuda' para ver los comandos de SimpleSQL"
-        )
+        pass
 
 
 def List():
@@ -313,25 +400,35 @@ def List():
 
 
 def Print(color):
-    global Cbegin
+    global Cbegin, Hcolor
 
     if color in ["blue", "azul"]:
         Cbegin = "\x1b[0;34;40m"
+        Hcolor = "\x1b[0;30;44m"
 
     if color in ["red", "rojo"]:
         Cbegin = "\x1b[0;31;40m"
+        Hcolor = "\x1b[0;30;41m"
 
     if color in ["green", "verde"]:
         Cbegin = "\x1b[0;32;40m"
+        Hcolor = "\x1b[0;30;42m"
 
     if color in ["yellow", "amarillo"]:
         Cbegin = "\x1b[0;33;40m"
+        Hcolor = "\x1b[5;30;43m"
 
     if color in ["orange", "naranja"]:
         Cbegin = "\x1b[1;33;40m"
+        Hcolor = "\x1b[0;30;43m"
 
     if color in ["pink", "rosa"]:
         Cbegin = "\x1b[0;35;40m"
+        Hcolor = "\x1b[6;30;41m"
+
+    if color in ["white", "blanco"]:
+        Cbegin = "\x1b[0;37;40m"
+        Hcolor = "\x1b[1;30;47m"
 
 
 def Max(key):
@@ -539,30 +636,39 @@ def Script(scripts):
 
 def SimpleSQL(Instruccion):
 
-    exit, late_exit, coma = False, False, False
+    exit, late_exit, coma, comilla = False, False, False, False
     estado = 0
-    error_msg, nombre_set = "", ""
-    lista_atributos, archivos_set, scripts = [], [], []
+    error_msg, nombre_set, conjuncion = "", "", ""
+    lista_atributos, archivos_set, condicion, scripts = [], [], [], []
 
     while exit == False:
 
         if Instruccion:
-            query = Instruccion.strip() + " "
+            query = Instruccion.strip().lower() + " "
+            print(Hcolor+">>"+Cend+" "+Cbegin+query+Cend)
             word, Instruccion = "", ""
             late_exit = True
 
         else:
-            query = input(Cbegin + ">>").strip() + " ; "
-            print(Cend)
+            query = input(Hcolor+">>"+Cend+" " +
+                          Cbegin).strip().lower() + " ; "+Cend
             word = ""
 
         try:
-            for char in query:
+            for char in query:  
+                
+                if char in tk_comilla:
 
-                if char in tk_coma:
+                    if comilla:
+                        comilla=False
+
+                    else:
+                        comilla = True
+
+                if char in tk_coma and comilla==False:
                     coma = True
-
-                if char not in tk_blank + tk_coma:
+     
+                if char not in tk_blank + tk_coma or comilla==True:
 
                     if estado != 35:
                         char.lower()
@@ -611,6 +717,7 @@ def SimpleSQL(Instruccion):
                         estado = 121
 
                     elif word in tk_close:
+                        print(Cend)
                         exit = True
 
                     else:
@@ -806,7 +913,7 @@ def SimpleSQL(Instruccion):
                             exit = True
 
                     else:
-                        print(word in tk_scolon)
+
                         if word in tk_scolon:
                             error_msg = "Se esperaba un set"
 
@@ -822,6 +929,7 @@ def SimpleSQL(Instruccion):
                 elif estado == 31:
 
                     if word in tk_asterisco:
+                        lista_atributos = ["*"]
                         estado = 32
 
                     elif Palabra(word):
@@ -848,7 +956,9 @@ def SimpleSQL(Instruccion):
                     else:
 
                         if word in tk_scolon:
-                            Select(["*"], [])
+                            Select(lista_atributos, condicion, conjuncion)
+                            lista_atributos, condicion, conjuncion = [], [], ""
+                            estado = 150
 
                             if late_exit == True:
                                 exit = True
@@ -876,7 +986,9 @@ def SimpleSQL(Instruccion):
                     else:
 
                         if word in tk_scolon:
-                            Select(lista_atributos, [])
+                            Select(lista_atributos, condicion, conjuncion)
+                            lista_atributos, condicion, conjuncion = [], [], ""
+                            estado = 150
 
                             if late_exit == True:
                                 exit = True
@@ -899,6 +1011,7 @@ def SimpleSQL(Instruccion):
                         estado = 33
 
                     else:
+
                         if word in tk_scolon:
                             error_msg = "Se esperaba un atributo"
 
@@ -915,8 +1028,15 @@ def SimpleSQL(Instruccion):
 
                 elif estado == 35:  # where
 
-                    if Condicion(word):
-                        estado = 36
+                    if (Palabra(word) or Numero(word) or Booleano(word) in [True, False, None] or word in tk_igual + tk_mayorQ + tk_menorQ ) and comilla==False:
+                        condicion.append(word)
+
+                        if len(condicion) % 3 == 0 and comilla==False:  # validar condicion
+                            estado = 36
+                        else:
+                            estado = 35
+                    elif comilla==True:
+                        word=word+" "
 
                     else:
                         if word in tk_scolon:
@@ -931,16 +1051,22 @@ def SimpleSQL(Instruccion):
 
                         estado = -1
 
-                    word = ""
+                    if comilla==False:
+                        word = ""
 
                 elif estado == 36:
 
-                    if Palabra(word):
+                    if word in tk_and + tk_or + tk_xor:
+                        conjuncion = word
                         estado = 35
 
                     else:
+
                         if word in tk_scolon:
-                            # Select()
+
+                            Select(lista_atributos, condicion, conjuncion)
+                            lista_atributos, condicion, conjuncion = [], [], ""
+                            estado = 150
 
                             if late_exit == True:
                                 exit = True
@@ -1353,7 +1479,8 @@ def SimpleSQL(Instruccion):
         except:
             pass
 
-        estado = 0
+        estado, error_msg = 0, ""
+    
 
 
 #        ~~> AON <~~
@@ -1456,18 +1583,18 @@ def AON(string):  # PARSER, ARCHIVOS .AON
                             word = ""
                             estado = 7
 
-                        elif Booleano(word) != None:
-
-                            valor = Booleano(word)
-                            diccionario[llave] = valor
-                            word = ""
-                            estado = 8
-
                         elif char in tk_comilla:
 
                             word = ""
                             accum = True
                             estado = 9
+
+                        elif Booleano(word) in [True, False, None]:
+
+                            valor = Booleano(word)
+                            diccionario[llave] = valor
+                            word = ""
+                            estado = 8
 
                         else:
                             estado = -1
@@ -1674,7 +1801,7 @@ def ArchivoSIQL(word):
 def Palabra(word):
 
     if word in reserved:
-        print(Cbegin + "'" + word + "' es una palabra reservada" + Cend)
+        Mensaje("'" + word + "' es una palabra reservada")
         return False
 
     estado = 0
@@ -1825,7 +1952,7 @@ def Booleano(word):
         elif estado == 8:
 
             if char == "e" and count == len(word):
-                return True
+                return False
 
             else:
                 return None

@@ -1,5 +1,5 @@
-print in orange ; 
 create set hola ; 
-use set hola ;
+use set hola ; 
 load into hola files ar1.aon, ar2.aon, ar3.aon ; 
-select nota, activo ; 
+select nota where nota > 2 ; 
+select nota, mensaje, activo where mensaje = "adios" and activo = true ; 

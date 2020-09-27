@@ -1,11 +1,11 @@
 (
     <
-        [nota] = 4.509,
+        [nota] = -4.509,
         [mensaje] = "nellllll",
         [activo] = true
     >,
     <
-        [nota] = 4,
+        [nota] = -4,
         [mensaje] = "soiiiiiiii tontooo",
         [activo] = false
     >,

@@ -6,12 +6,12 @@
     >,
     <
         [nota] = 4.009,
-        [mensaje] = "ins",
+        [mensaje] = "adios",
         [activo] = false
     >,
     <
-        [nota] = 9.64,
-        [mensaje] = "holi",
-        [activo] = true
+        [nota] = 964,
+        [mensaje] = "adios",
+        [activo] = false
     >
 )
