@@ -111,6 +111,11 @@ tk_color = [
     "rosa",
     "blanco"
 ]
+tk_no_igual = ["!="]
+tk_mayor_igual = [">="]
+tk_menor_igual = ["<="]
+tk_operadores = tk_menorQ+tk_mayorQ+tk_igual + \
+    tk_menor_igual+tk_mayor_igual+tk_no_igual
 
 # Comandos
 
@@ -119,7 +124,7 @@ def Mensaje(texto):
 
     if texto:
         print(
-            "\x1b[0;30;41m"
+            "\n\x1b[0;30;41m"
             + ">>>>>>>>>>>>>"
             + Cend
             + "  "
@@ -246,7 +251,6 @@ def Use(nombre):
 
 
 def Select(lista_llaves, condicion, conjuncion):
-    print(lista_llaves, condicion, conjuncion)
 
     global selected_set
     lista_tuplas, lista_final = [], []
@@ -257,7 +261,7 @@ def Select(lista_llaves, condicion, conjuncion):
         if selected_set:  # Verificando si se seleccionó un set (Use)
             diccionario_prueba = selected_set[0][0]
         else:
-            Mensaje("No se ha seleccionado un set")
+            Mensaje("No se ha seleccionado un set, o no se han cargado archivos")
             err += 1
 
         if lista_llaves == ["*"]:  # Verificando si se ingresó '*'
@@ -282,7 +286,7 @@ def Select(lista_llaves, condicion, conjuncion):
         for i in range(rango):
 
             if condicion:
-                
+
                 condicion_llave = condicion[3 * i].strip()
                 condicion_operador = condicion[3 * i + 1].strip()
                 condicion_valor = condicion[3 * i + 2].strip()
@@ -294,7 +298,7 @@ def Select(lista_llaves, condicion, conjuncion):
                     condicion_valor = Booleano(condicion_valor)
 
                 else:
-                    condicion_valor=condicion_valor[1:-1]
+                    condicion_valor = condicion_valor[1:-1]
 
             tuplas = []
 
@@ -331,12 +335,35 @@ def Select(lista_llaves, condicion, conjuncion):
                             else:
                                 cumple_condicion = False
 
+                        elif condicion_operador in tk_no_igual:
+
+                            if diccionario[condicion_llave] != condicion_valor:
+                                pass
+                            else:
+                                cumple_condicion = False
+
+                        elif condicion_operador in tk_mayor_igual:
+
+                            if diccionario[condicion_llave] != None:
+                                if diccionario[condicion_llave] >= condicion_valor:
+                                    pass
+                                else:
+                                    cumple_condicion = False
+
+                        elif condicion_operador in tk_menor_igual:
+
+                            if diccionario[condicion_llave] != None:
+                                if diccionario[condicion_llave] <= condicion_valor:
+                                    pass
+                                else:
+                                    cumple_condicion = False
+
                     if cumple_condicion:
 
                         tupla = "    ||  "
                         for llave in lista_llaves:
 
-                            tupla = tupla+ \
+                            tupla = tupla + \
                                 str(diccionario[llave]) + "  ||  "
 
                         tuplas.append(tupla)
@@ -344,24 +371,24 @@ def Select(lista_llaves, condicion, conjuncion):
             lista_tuplas.append(tuplas)
 
         if len(lista_tuplas) > 1:
-            
+
             if conjuncion in tk_and:
-                
+
                 for tupla in lista_tuplas[0]:
 
                     if tupla in lista_tuplas[1]:
                         lista_final.append(tupla)
 
             elif conjuncion in tk_or:
-                
+
                 lista_final = lista_tuplas[0]
                 for tupla in lista_tuplas[1]:
 
                     if tupla not in lista_final:
                         lista_final.append(tupla)
-               
+
             elif conjuncion in tk_xor:
-                
+
                 lista_final = lista_tuplas[0]
                 for tupla in lista_tuplas[1]:
 
@@ -376,27 +403,36 @@ def Select(lista_llaves, condicion, conjuncion):
                 lista_final = lista_tuplas[0]
 
         else:
-            
+
             lista_final = lista_tuplas[0]
 
         if lista_final:
-            
             for tupla in lista_final:
                 print(Cbegin + tupla + Cend)
-            print("\n"+Hcolor + "=" * len(header) +  Cend+"\n")
-
+            print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
 
         else:
-
             print(Cbegin+" ~ " * (len(header)//3) + Cend)
-            print("\n"+Hcolor + "=" * len(header) +  Cend+"\n")
+            print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
 
     except:
         pass
 
 
 def List():
-    print("el")
+
+    print("\n"+Hcolor + "   Atributos   \n" + "=" * 15 + Cend+"\n")
+
+    if selected_set:
+        diccionario_muestra = selected_set[0][0]
+
+        for atributo in diccionario_muestra:
+            print("   "+atributo)
+
+    else:
+        print(Cbegin+" ~ " * 5)
+
+    print("\n"+Hcolor + "=" * 15 + Cend+"\n")
 
 
 def Print(color):
@@ -431,85 +467,120 @@ def Print(color):
         Hcolor = "\x1b[1;30;47m"
 
 
-def Max(key):
+def Max(llave):
 
-    if len(registros) > 0:
-        try:
-            if registros[0][0][key] == True or registros[0][0][key] == False:
-                err += 1
+    if selected_set:
 
-            if "." in str(registros[0][0][key]):
-                valor_maximo = float(registros[0][0][key])
+        valor_maximo = selected_set[0][0][llave]
+
+        for archivo in selected_set:
+
+            for diccionario in archivo:
+                
+                if diccionario[llave] != None:
+
+                    if diccionario[llave] > valor_maximo:
+                        valor_maximo = diccionario[llave]
+
+        print("\n",Cbegin + valor_maximo + Cend, "\n")
+
+    else:
+        Mensaje("No se ha seleccionado un set")
+
+
+def Min(llave):
+
+    if selected_set:
+
+        valor_minimo = selected_set[0][0][llave]
+
+        for archivo in selected_set:
+
+            for diccionario in archivo:
+                
+                if diccionario[llave] != None:
+
+                    if diccionario[llave] < valor_minimo:
+                        valor_minimo = diccionario[llave]
+
+        print("\n",Cbegin + valor_minimo + Cend, "\n")
+
+    else:
+        Mensaje("No se ha seleccionado un set")
+
+
+def Sum(lista_llaves):
+
+    if lista_llaves == ["*"]:  # Verificando si se ingresó '*'
+        lista_llaves = selected_set[0][0].keys()
+
+    if selected_set:
+
+        lista_sumas = []
+        for llave in lista_llaves:
+
+            if Numero(selected_set[0][0][llave]):
+
+                suma = 0
+
+                for archivo in selected_set:
+
+                    for diccionario in archivo:
+
+                        suma += diccionario[llave]
+
+                lista_sumas.append(suma)
+
             else:
-                valor_maximo = int(registros[0][0][key])
+                lista_sumas.append("NO_NUM")
 
-            for registro in registros:
-                for diccionario in registro:
-                    if key in diccionario:
-                        if diccionario[key] > valor_maximo:
-                            valor_maximo = diccionario[key]
+        header = "    ||    "  # ENCABEZADO
+        for llave in lista_llaves:
+            header = header + llave + "    ||    "
+        print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
 
-            print(valor_maximo)
-        except:
-            print("'" + key + "' no es una variable numérica")
+        fila = Cbegin+"    ||  "  # SUMAS
+        for suma in lista_sumas:
+            fila = fila + \
+                str(suma) + "  ||  "
+        fila = fila+Cend+"\n"
 
-    else:
-        print("No se han cargado archivos")
-
-
-def Min(key):
-
-    if len(registros) > 0:
-        try:
-            if registros[0][0][key] == True or registros[0][0][key] == False:
-                err += 1
-
-            if "." in str(registros[0][0][key]):
-                valor_minimo = float(registros[0][0][key])
-            else:
-                valor_minimo = int(registros[0][0][key])
-
-            for registro in registros:
-                for diccionario in registro:
-                    if key in diccionario:
-                        if diccionario[key] < valor_minimo:
-                            valor_minimo = diccionario[key]
-
-            print(valor_minimo)
-        except:
-            print("'" + key + "' no es una variable numérica")
+        print(fila)
 
     else:
-        print("No se han cargado archivos")
+        Mensaje("No se ha seleccionado un set")
 
 
-def Sum(key):
+def Count(lista_llaves):
+    
+    if lista_llaves == ["*"]:  # Verificando si se ingresó '*'
+        lista_llaves = selected_set[0][0].keys()
 
-    if len(registros) > 0:
-        try:
-            if registros[0][0][key] == True or registros[0][0][key] == False:
-                err += 1
+    lista_cuentas = []
 
-            suma_total = 0
+    for llave in lista_llaves:
 
-            for registro in registros:
-                for diccionario in registro:
-                    suma_total += diccionario[key]
+        cuenta = 0
+        for archivo in selected_set:
 
-            print(suma_total)
-        except:
-            print("'" + key + "' no es una variable numérica")
+            for diccionario in archivo:
 
-    else:
-        print("No se han cargado archivos")
+                if llave in diccionario and diccionario[llave] not in ["null", None]:
+                    cuenta += 1
 
+        lista_cuentas.append(cuenta)
 
-def Count():
+    header = "  ||  "  # ENCABEZADO
+    for llave in lista_llaves:
+        header = header + llave + "  ||  "
+    print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
 
-    if len(registros) > 0:
-        print("Se han cargado " + str(len(registros)) + " archivos")
-    else:
-        print("No se han cargado archivos")
+    fila = Cbegin+"    ||  "  # SUMAS
+    for cuenta in lista_cuentas:
+        fila = fila + \
+            str(cuenta) + "  ||  "
+            
+    print(fila+Cend+"\n\n"+Hcolor + "=" * len(header) + Cend+"\n")
 
 
 def Report(num):
@@ -639,36 +710,36 @@ def SimpleSQL(Instruccion):
     exit, late_exit, coma, comilla = False, False, False, False
     estado = 0
     error_msg, nombre_set, conjuncion = "", "", ""
-    lista_atributos, archivos_set, condicion, scripts = [], [], [], []
+    lista_llaves, archivos_set, condicion, scripts = [], [], [], []
 
     while exit == False:
 
         if Instruccion:
             query = Instruccion.strip().lower() + " "
-            print(Hcolor+">>"+Cend+" "+Cbegin+query+Cend)
+            print(Hcolor+" >> "+Cend+" "+Cbegin+query+Cend)
             word, Instruccion = "", ""
             late_exit = True
 
         else:
-            query = input(Hcolor+">>"+Cend+" " +
+            query = input(Hcolor+" >> "+Cend+" " +
                           Cbegin).strip().lower() + " ; "+Cend
             word = ""
 
         try:
-            for char in query:  
-                
+            for char in query:
+
                 if char in tk_comilla:
 
                     if comilla:
-                        comilla=False
+                        comilla = False
 
                     else:
                         comilla = True
 
-                if char in tk_coma and comilla==False:
+                if char in tk_coma and comilla == False:
                     coma = True
-     
-                if char not in tk_blank + tk_coma or comilla==True:
+
+                if char not in tk_blank + tk_coma or comilla == True:
 
                     if estado != 35:
                         char.lower()
@@ -929,11 +1000,11 @@ def SimpleSQL(Instruccion):
                 elif estado == 31:
 
                     if word in tk_asterisco:
-                        lista_atributos = ["*"]
+                        lista_llaves = ["*"]
                         estado = 32
 
                     elif Palabra(word):
-                        lista_atributos = [word]
+                        lista_llaves = [word]
                         estado = 33
 
                     else:
@@ -956,8 +1027,8 @@ def SimpleSQL(Instruccion):
                     else:
 
                         if word in tk_scolon:
-                            Select(lista_atributos, condicion, conjuncion)
-                            lista_atributos, condicion, conjuncion = [], [], ""
+                            Select(lista_llaves, condicion, conjuncion)
+                            lista_llaves, condicion, conjuncion = [], [], ""
                             estado = 150
 
                             if late_exit == True:
@@ -986,8 +1057,8 @@ def SimpleSQL(Instruccion):
                     else:
 
                         if word in tk_scolon:
-                            Select(lista_atributos, condicion, conjuncion)
-                            lista_atributos, condicion, conjuncion = [], [], ""
+                            Select(lista_llaves, condicion, conjuncion)
+                            lista_llaves, condicion, conjuncion = [], [], ""
                             estado = 150
 
                             if late_exit == True:
@@ -1007,7 +1078,7 @@ def SimpleSQL(Instruccion):
                 elif estado == 34:
 
                     if Palabra(word):
-                        lista_atributos.append(word)
+                        lista_llaves.append(word)
                         estado = 33
 
                     else:
@@ -1028,15 +1099,15 @@ def SimpleSQL(Instruccion):
 
                 elif estado == 35:  # where
 
-                    if (Palabra(word) or Numero(word) or Booleano(word) in [True, False, None] or word in tk_igual + tk_mayorQ + tk_menorQ ) and comilla==False:
+                    if (Palabra(word) or Numero(word) or Booleano(word) in [True, False, None] or word in tk_operadores) and comilla == False:
                         condicion.append(word)
 
-                        if len(condicion) % 3 == 0 and comilla==False:  # validar condicion
+                        if len(condicion) % 3 == 0 and comilla == False:  # validar condicion
                             estado = 36
                         else:
                             estado = 35
-                    elif comilla==True:
-                        word=word+" "
+                    elif comilla == True:
+                        word = word+" "
 
                     else:
                         if word in tk_scolon:
@@ -1051,7 +1122,7 @@ def SimpleSQL(Instruccion):
 
                         estado = -1
 
-                    if comilla==False:
+                    if comilla == False:
                         word = ""
 
                 elif estado == 36:
@@ -1064,8 +1135,8 @@ def SimpleSQL(Instruccion):
 
                         if word in tk_scolon:
 
-                            Select(lista_atributos, condicion, conjuncion)
-                            lista_atributos, condicion, conjuncion = [], [], ""
+                            Select(lista_llaves, condicion, conjuncion)
+                            lista_llaves, condicion, conjuncion = [], [], ""
                             estado = 150
 
                             if late_exit == True:
@@ -1087,7 +1158,7 @@ def SimpleSQL(Instruccion):
                 elif estado == 41:
 
                     if word in tk_atributes:
-                        # list()
+                        List()
                         estado = 150
 
                         if late_exit == True:
@@ -1160,7 +1231,7 @@ def SimpleSQL(Instruccion):
                 elif estado == 61:
 
                     if Palabra(word):
-                        # max()
+                        Max(word)
                         estado = 150
 
                         if late_exit == True:
@@ -1186,7 +1257,7 @@ def SimpleSQL(Instruccion):
                 elif estado == 71:
 
                     if Palabra(word):
-                        # min()
+                        Min(word)
                         estado = 150
 
                         if late_exit == True:
@@ -1211,7 +1282,15 @@ def SimpleSQL(Instruccion):
 
                 elif estado == 81:
 
-                    if Palabra(word):
+                    if word in tk_asterisco:
+                        Sum(["*"])
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    elif Palabra(word):
+                        lista_llaves.append(word)
                         estado = 82
 
                     else:
@@ -1238,7 +1317,9 @@ def SimpleSQL(Instruccion):
                     else:
 
                         if word in tk_scolon:
-                            # sum()
+                            Sum(lista_llaves)
+                            lista_llaves = []
+                            estado = 150
 
                             if late_exit == True:
                                 exit = True
@@ -1255,10 +1336,12 @@ def SimpleSQL(Instruccion):
                 elif estado == 91:
 
                     if word in tk_asterisco:
-                        estado = 92
+                        Count(["*"])
+                        estado = 150
 
                     elif Palabra(word):
-                        estado = 93
+                        lista_llaves.append(word)
+                        estado = 92
 
                     else:
                         if word in tk_scolon:
@@ -1277,27 +1360,16 @@ def SimpleSQL(Instruccion):
 
                 elif estado == 92:
 
-                    if word in tk_scolon:
-                        # Count()
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-                        error_msg = "No se esperaba " + word
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 93:
-
                     if coma == True:
                         coma = False
-                        estado = 94
+                        estado = 93
 
                     else:
                         if word in tk_scolon:
-                            # Count()
+                            
+                            Count(lista_llaves)
+                            lista_llaves = []
+                            estado = 150
 
                             if late_exit == True:
                                 exit = True
@@ -1309,10 +1381,11 @@ def SimpleSQL(Instruccion):
 
                     word = ""
 
-                elif estado == 94:
+                elif estado == 93:
 
                     if Palabra(word):
-                        estado = 93
+                        lista_llaves.append(word)
+                        estado = 92
 
                     else:
 
@@ -1479,8 +1552,7 @@ def SimpleSQL(Instruccion):
         except:
             pass
 
-        estado, error_msg = 0, ""
-    
+        estado, error_msg, lista_llaves = 0, "", []
 
 
 #        ~~> AON <~~
@@ -1833,7 +1905,7 @@ def Palabra(word):
 def Numero(word):
     estado = 0
 
-    for char in word:
+    for char in str(word):
 
         if estado == 0:
 

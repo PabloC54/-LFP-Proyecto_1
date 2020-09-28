@@ -1,12 +1,12 @@
 (
     <
-        [nota] = 45.09,
+        [nota] = None,
         [mensaje] = "hola mundo",
         [activo] = true
     >,
     <
         [nota] = 4,
-        [mensaje] = "adios",
+        [mensaje] = "null",
         [activo] = gg
     >,
     <
