@@ -1,6 +1,6 @@
 (
     <
-        [nota] = None,
+        [nota] = 4.3, 
         [mensaje] = "hola mundo",
         [activo] = true
     >,

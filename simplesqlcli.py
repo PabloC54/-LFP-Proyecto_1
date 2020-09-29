@@ -1,10 +1,14 @@
+import traceback
 import webbrowser
 
-# Inicializando
+
+# ================> INICIALIZANDO <====================
 
 Cbegin = "\x1b[0;37;40m"
 Cend = "\x1b[0m"
 Hcolor = "\x1b[1;30;47m"
+reporte, nombre_reporte = False, ""
+
 
 set_names = []
 set_files = []
@@ -117,7 +121,537 @@ tk_menor_igual = ["<="]
 tk_operadores = tk_menorQ+tk_mayorQ+tk_igual + \
     tk_menor_igual+tk_mayor_igual+tk_no_igual
 
-# Comandos
+
+# ================> AFD AUXILIARES <====================
+
+
+def AON(string):  # PARSER, ARCHIVOS .AON
+    word, palabras, llave = "", "", ""
+    archivo, diccionario = [], {}
+    accum = False
+
+    estado, count = 0, 0
+    try:
+        for char in string:
+            count += 1
+
+            if (char not in tk_blank and char != "\n") or accum == True:
+
+                if estado in [3] and accum == True:
+                    word = word + char
+
+                    if string[count] in ["]"]:
+                        accum = False
+
+                elif estado in [6] and accum == True:
+                    if char not in tk_blank + ["\n"]:
+                        word = word + char
+
+                    if string[count] in [",", ">", " "] or char in tk_comilla:
+                        accum = False
+
+                elif estado in [9, 10] and accum == True:
+                    word = word + char
+                    if (
+                        string[count] in tk_comilla + tk_blank
+                        or char in tk_comilla + tk_blank
+                    ):
+                        accum = False
+
+                if accum == False:
+
+                    if estado == 0:
+
+                        if char in tk_parA:
+                            estado = 1
+
+                        else:
+                            estado = -1
+
+                    elif estado == 1:
+
+                        if char in tk_menorQ:
+                            diccionario = {}
+                            estado = 2
+
+                        else:
+                            estado = -1
+
+                    elif estado == 2:
+
+                        if char in tk_corchA:
+                            accum = True
+                            estado = 3
+
+                        else:
+                            estado = -1
+
+                    elif estado == 3:
+
+                        if Palabra(word):
+                            llave = word.strip()
+                            word = ""
+                            estado = 4
+
+                        else:
+                            estado = -1
+
+                    elif estado == 4:
+
+                        if char in tk_corchB:
+                            estado = 5
+
+                        else:
+                            estado = -1
+
+                    elif estado == 5:
+
+                        if char in tk_igual:
+                            accum = True
+                            estado = 6
+
+                        else:
+                            estado = -1
+
+                    elif estado == 6:
+
+                        if Numero(word.strip()):
+
+                            valor = float(word)
+                            diccionario[llave] = valor
+                            word = ""
+                            estado = 7
+
+                        elif char in tk_comilla:
+
+                            word = ""
+                            accum = True
+                            estado = 9
+
+                        elif Booleano(word) in [True, False, None]:
+
+                            valor = Booleano(word)
+                            diccionario[llave] = valor
+                            word = ""
+                            estado = 8
+
+                        else:
+                            estado = -1
+
+                    elif estado == 7:
+
+                        if char in tk_coma:
+                            estado = 2
+
+                        elif char in tk_mayorQ:
+                            archivo.append(diccionario)
+                            estado = 12
+
+                        else:
+                            estado = -1
+
+                    elif estado == 8:
+
+                        if char in tk_coma:
+                            estado = 2
+
+                        elif char in tk_mayorQ:
+                            archivo.append(diccionario)
+                            estado = 12
+
+                        else:
+                            estado = -1
+
+                    elif estado == 9:
+
+                        if Palabra(word):
+                            palabras = word
+                            word = ""
+                            accum = True
+                            estado = 10
+
+                        else:
+                            estado = -1
+
+                    elif estado == 10:
+
+                        if char in tk_comilla:
+                            valor = palabras
+                            diccionario[llave] = valor
+                            word, palabras = "", ""
+                            estado = 11
+
+                        elif Palabra(word) or word in tk_blank:
+                            palabras = palabras + word
+                            word = ""
+                            accum = True
+                            estado = 10
+
+                        else:
+                            estado = -1
+
+                    elif estado == 11:
+
+                        if char in tk_coma:
+                            estado = 2
+
+                        elif char in tk_mayorQ:
+                            archivo.append(diccionario)
+                            estado = 12
+
+                        else:
+                            estado = -1
+
+                    elif estado == 12:
+
+                        if char in tk_coma:
+                            estado = 1
+
+                        elif char in tk_parB:
+                            estado = 13
+
+                        else:
+                            estado = -1
+
+                    if estado == 13:
+                        return archivo
+
+                    if estado == -1:
+                        err += 1
+
+    except:
+
+        Mensaje("El archivo no es un archivo AON válido")
+
+
+def ArchivoAON(word):
+
+    estado, count = 0, 0
+
+    for char in word:
+        count += 1
+
+        if estado == 0:
+
+            if char in tk_letra + tk_digito:
+                estado = 1
+
+        elif estado == 1:
+
+            if char in tk_letra + tk_digito:
+                estado = 1
+
+            elif char in tk_punto:
+                estado = 2
+
+            else:
+                return False
+
+        elif estado == 2:
+
+            if char == "a":
+                estado = 3
+
+            else:
+                return False
+
+        elif estado == 3:
+
+            if char == "o":
+                estado = 4
+
+            else:
+                return False
+
+        elif estado == 4:
+
+            if char == "n" and count == len(word):
+                return True
+
+            else:
+                return False
+
+
+def ArchivoSIQL(word):
+    estado, count = 0, 0
+
+    for char in word:
+        count += 1
+
+        if estado == 0:
+
+            if char in tk_letra + tk_digito:
+                estado = 1
+
+        elif estado == 1:
+
+            if char in tk_letra + tk_digito:
+                estado = 1
+
+            elif char in tk_punto:
+                estado = 2
+
+            else:
+                return False
+
+        elif estado == 2:
+
+            if char == "s":
+                estado = 3
+
+            else:
+                return False
+
+        elif estado == 3:
+
+            if char == "i":
+                estado = 4
+
+            else:
+                return False
+
+        elif estado == 4:
+
+            if char == "q":
+                estado = 5
+
+            else:
+                return False
+
+        elif estado == 5:
+
+            if char == "l" and count == len(word):
+                estado = 5
+                return True
+
+            else:
+                return False
+
+
+def Palabra(word):
+
+    if word in reserved:
+        Mensaje("'" + word + "' es una palabra reservada")
+        return False
+
+    estado = 0
+
+    for char in word:
+
+        if estado == 0:
+
+            if char in tk_texto:
+                estado = 1
+
+            else:
+                return False
+
+        elif estado == 1:
+
+            if char in tk_texto:
+                estado = 1
+
+            else:
+                return False
+
+    return True
+
+
+def Numero(word):
+    estado = 0
+
+    for char in str(word):
+
+        if estado == 0:
+
+            if char in tk_guion:
+                estado = 1
+
+            elif char in tk_digito:
+                estado = 2
+
+            else:
+                return False
+
+        elif estado == 1:
+
+            if char in tk_digito:
+                estado = 2
+
+            else:
+                return False
+
+        elif estado == 2:
+
+            if char in tk_digito:
+                estado = 2
+
+            elif char in tk_punto:
+                estado = 3
+
+            else:
+                return False
+
+        elif estado == 3:
+
+            if char in tk_digito:
+                estado = 4
+
+            else:
+                return False
+
+        elif estado == 4:
+
+            if char in tk_digito:
+                estado = 4
+
+    return True
+
+
+def Booleano(word):
+    estado, count = 0, 0
+
+    for char in word:
+        count += 1
+
+        if estado == 0:
+
+            if char == "t":
+                estado = 1
+
+            elif char == "f":
+                estado = 5
+
+            else:
+                return None
+
+        elif estado == 1:
+
+            if char == "r":
+                estado = 2
+
+            else:
+                return None
+
+        elif estado == 2:
+
+            if char == "u":
+                estado = 3
+
+            else:
+                return None
+
+        elif estado == 3:
+
+            if char == "e" and count == len(word):
+                return True
+
+            else:
+                return None
+
+        elif estado == 5:
+
+            if char == "a":
+                estado = 6
+
+            else:
+                return None
+
+        elif estado == 6:
+
+            if char == "l":
+                estado = 7
+
+            else:
+                return None
+
+        elif estado == 7:
+
+            if char == "s":
+                estado = 8
+
+            else:
+                return None
+
+        elif estado == 8:
+
+            if char == "e" and count == len(word):
+                return False
+
+            else:
+                return None
+
+
+def Condicion(string):
+    estado = 0
+
+    for char in string:
+
+        if char != " " and char != "/n":
+
+            if estado == 0:
+
+                if char in tk_letra:
+                    estado = 1
+
+                else:
+                    return False
+
+            elif estado == 1:
+
+                if char in tk_texto:
+                    estado = 1
+
+                elif char in tk_igual:
+                    estado = 2
+
+                else:
+                    return False
+
+            elif estado == 2:
+
+                if char in tk_comilla:
+                    estado = 3
+
+                elif char in tk_digito:
+                    estado = 4
+
+                elif char in tk_letra:
+                    estado = 9999
+
+            elif estado == 3:
+
+                if char in tk_letra:
+                    estado = 3
+
+                elif char in tk_comilla:
+                    estado = "gg"
+
+    return True
+
+
+def RegEx(string):
+    estado = 0
+
+    for char in string:
+
+        if estado == 0:
+
+            if char in tk_letra:
+                estado = 1
+
+        elif estado == 1:
+
+            if char in tk_letra:
+                estado = 1
+
+            else:
+                return False
+
+    return True
+
+
+# ================> COMANDOS <====================
 
 
 def Mensaje(texto):
@@ -251,7 +785,7 @@ def Use(nombre):
 
 
 def Select(lista_llaves, condicion, conjuncion):
-
+    
     global selected_set
     lista_tuplas, lista_final = [], []
     diccionario_prueba = {}
@@ -273,11 +807,6 @@ def Select(lista_llaves, condicion, conjuncion):
                 lista_llaves.remove(llave)
                 Mensaje("Atributo '" + llave + "' no encontrado")
 
-        header = "    ||    "  # ENCABEZADO
-        for llave in lista_llaves:
-            header = header + llave + "    ||    "
-        print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
-
         if condicion:
             rango = len(condicion) // 3
         else:
@@ -297,7 +826,7 @@ def Select(lista_llaves, condicion, conjuncion):
                 elif Booleano(condicion_valor) in [True, False]:
                     condicion_valor = Booleano(condicion_valor)
 
-                else:
+                elif condicion_valor != None:
                     condicion_valor = condicion_valor[1:-1]
 
             tuplas = []
@@ -360,17 +889,25 @@ def Select(lista_llaves, condicion, conjuncion):
 
                     if cumple_condicion:
 
-                        tupla = "    ||  "
-                        for llave in lista_llaves:
+                        if reporte:
 
-                            tupla = tupla + \
-                                str(diccionario[llave]) + "  ||  "
+                            tupla = []
+                            for llave in lista_llaves:
+                                tupla.append(diccionario[llave])
+
+                        else:
+
+                            tupla = "    ||  "
+                            for llave in lista_llaves:
+
+                                tupla = tupla + \
+                                    str(diccionario[llave]) + "  ||  "
 
                         tuplas.append(tupla)
 
             lista_tuplas.append(tuplas)
 
-        if len(lista_tuplas) > 1:
+        if len(lista_tuplas) >= 2:
 
             if conjuncion in tk_and:
 
@@ -403,17 +940,26 @@ def Select(lista_llaves, condicion, conjuncion):
                 lista_final = lista_tuplas[0]
 
         else:
-
             lista_final = lista_tuplas[0]
 
-        if lista_final:
-            for tupla in lista_final:
-                print(Cbegin + tupla + Cend)
-            print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
+        if reporte:              
+            Report(lista_llaves, lista_final)
 
         else:
-            print(Cbegin+" ~ " * (len(header)//3) + Cend)
-            print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
+
+            header = "    ||    "  # ENCABEZADO
+            for llave in lista_llaves:
+                header = header + llave + "    ||    "
+            print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
+
+            if lista_final:  # CUERPO
+                for tupla in lista_final:
+                    print(Cbegin + tupla + Cend)
+                print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
+
+            else:
+                print(Cbegin+" ~ " * (len(header)//3) + Cend)
+                print("\n"+Hcolor + "=" * len(header) + Cend+"\n")
 
     except:
         pass
@@ -421,18 +967,23 @@ def Select(lista_llaves, condicion, conjuncion):
 
 def List():
 
-    print("\n"+Hcolor + "   Atributos   \n" + "=" * 15 + Cend+"\n")
-
     if selected_set:
         diccionario_muestra = selected_set[0][0]
 
-        for atributo in diccionario_muestra:
-            print("   "+atributo)
+        if reporte:
+            Report("Atributos", diccionario_muestra.keys())
 
-    else:
-        print(Cbegin+" ~ " * 5)
+        else:
+            print("\n"+Hcolor + "   Atributos   \n" + "=" * 15 + Cend+"\n")
 
-    print("\n"+Hcolor + "=" * 15 + Cend+"\n")
+            if diccionario_muestra:
+                for atributo in diccionario_muestra:
+                    print(Cbegin+"  || "+atributo+"  ||  "+Cend)
+
+            else:
+                print(Cbegin+" ~ " * 5+Cend)
+
+            print("\n"+Hcolor + "=" * 15 + Cend+"\n")
 
 
 def Print(color):
@@ -468,13 +1019,13 @@ def Print(color):
 
 
 def Max(llave):
-
+    
     if selected_set:
 
         valor_maximo = selected_set[0][0][llave]
 
         for archivo in selected_set:
-
+            
             for diccionario in archivo:
                 
                 if diccionario[llave] != None:
@@ -482,7 +1033,11 @@ def Max(llave):
                     if diccionario[llave] > valor_maximo:
                         valor_maximo = diccionario[llave]
 
-        print("\n",Cbegin + valor_maximo + Cend, "\n")
+        if reporte:
+            Report(llave, [str(valor_maximo)])
+
+        else:
+            print("\n", Cbegin + str(valor_maximo) + Cend, "\n")
 
     else:
         Mensaje("No se ha seleccionado un set")
@@ -497,13 +1052,17 @@ def Min(llave):
         for archivo in selected_set:
 
             for diccionario in archivo:
-                
+
                 if diccionario[llave] != None:
 
                     if diccionario[llave] < valor_minimo:
                         valor_minimo = diccionario[llave]
 
-        print("\n",Cbegin + valor_minimo + Cend, "\n")
+        if reporte:
+            Report(llave, [str(valor_minimo)])
+            
+        else:
+            print("\n", Cbegin + str(valor_minimo) + Cend, "\n")
 
     else:
         Mensaje("No se ha seleccionado un set")
@@ -529,30 +1088,34 @@ def Sum(lista_llaves):
 
                         suma += diccionario[llave]
 
-                lista_sumas.append(suma)
+                lista_sumas.append(str(suma))
 
             else:
                 lista_sumas.append("NO_NUM")
 
-        header = "    ||    "  # ENCABEZADO
-        for llave in lista_llaves:
-            header = header + llave + "    ||    "
-        print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
+        if reporte:
+            Report(lista_llaves, [lista_sumas])
+            
+        else:
+            header = "    ||    "  # ENCABEZADO
+            for llave in lista_llaves:
+                header = header + llave + "    ||    "
+            print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
 
-        fila = Cbegin+"    ||  "  # SUMAS
-        for suma in lista_sumas:
-            fila = fila + \
-                str(suma) + "  ||  "
-        fila = fila+Cend+"\n"
+            fila = Cbegin+"    ||  "  # SUMAS
+            for suma in lista_sumas:
+                fila = fila + \
+                    str(suma) + "  ||  "
+            fila = fila+Cend+"\n"
 
-        print(fila)
+            print(fila)
 
     else:
         Mensaje("No se ha seleccionado un set")
 
 
 def Count(lista_llaves):
-    
+
     if lista_llaves == ["*"]:  # Verificando si se ingresó '*'
         lista_llaves = selected_set[0][0].keys()
 
@@ -568,119 +1131,77 @@ def Count(lista_llaves):
                 if llave in diccionario and diccionario[llave] not in ["null", None]:
                     cuenta += 1
 
-        lista_cuentas.append(cuenta)
+        lista_cuentas.append(str(cuenta))
 
-    header = "  ||  "  # ENCABEZADO
-    for llave in lista_llaves:
-        header = header + llave + "  ||  "
-    print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
+        
+    if reporte:
+        Report(lista_llaves, [lista_cuentas])
+        
+    else:
 
-    fila = Cbegin+"    ||  "  # SUMAS
-    for cuenta in lista_cuentas:
-        fila = fila + \
-            str(cuenta) + "  ||  "
-            
-    print(fila+Cend+"\n\n"+Hcolor + "=" * len(header) + Cend+"\n")
+        header = "  ||  "  # ENCABEZADO
+        for llave in lista_llaves:
+            header = header + llave + "  ||  "
+        print("\n"+Hcolor + header + "\n" + "=" * len(header) + Cend+"\n")
+
+        fila = Cbegin+"    ||  "  # SUMAS
+        for cuenta in lista_cuentas:
+            fila = fila + \
+                str(cuenta) + "  ||  "
+
+        print(fila+Cend+"\n\n"+Hcolor + "=" * len(header) + Cend+"\n")
 
 
-def Report(num):
+def Report(lista_llaves, lista_tuplas):
+    
+    html_file = open(nombre_reporte+".html", "w")
 
-    if len(registros) > 0:
+    html_file.write(  # ENCABEZADO
+        "<!DOCTYPE html>\n"
+        + "<html>\n"
+        + "    <head>\n"
+        + "        <title>Reporte de registros</title>\n"
+        
+        + "    <link rel='stylesheet' type='text/css' href='style.css'/>\n"
+        + "    </head>\n"
+        + "    <body>\n"
+    )
 
-        diccionarios_totales = 0
-        for registro in registros:
-            for diccionario in registro:
-                diccionarios_totales += 1
 
-        if num <= diccionarios_totales:
+    html_file.write("        <table class='container'>\n") # TABLA
+    html_file.write("            <thead>\n") # ENCABEZADO DE LA TABLA
 
-            html_file = open("reporte.html", "w")
+    html_file.write("                <tr>\n") 
 
-            html_file.write(
-                "<!DOCTYPE html>\n"
-                + "<html>\n"
-                + "    <head>\n"
-                + "        <title>Reporte de registros</title>\n"
-                + "        <style>\n"
-                + "            body{\n"
-                + "                background-image:url(bg.png);\n"
-                + "            }\n"
-                + "            .registro{\n"
-                + "                background-color:black;\n"
-                + "                width: 60%;\n"
-                + "                padding: 15px;\n"
-                + "                margin: 10px 20%;\n"
-                + "            }\n"
-                + "            .diccionario{\n"
-                + "                background-color:darkslategray;\n"
-                + "                padding: 2px 10px;\n"
-                + "                margin: 8px;\n"
-                + "            }\n"
-                + "            h2{\n"
-                + "                color:white;\n"
-                + "                text-decoration: underline;\n"
-                + "            }\n"
-                + "            h3{\n"
-                + "                color:aquamarine;\n"
-                + "            }\n"
-                + "            p{\n"
-                + "                color:lightblue;\n"
-                + "            }\n"
-                + "        </style>\n"
-                + "    <head>\n\n"
-                + "    <body>\n"
-            )
-
-            num_registro, num_diccionario = 0, 0
-
-            try:
-                for registro in registros:  # BODY
-                    html_file.write(
-                        "        <div class='registro'>\n"
-                        + "            <h2>Nombre: REGISTRO "
-                        + str(num_registro + 1)
-                        + "</h2>\n\n"
-                    )
-
-                    for diccionario in registro:
-                        html_file.write(
-                            "            <div class='diccionario'>\n"
-                            + "                <h3>Diccionario "
-                            + str(num_diccionario + 1)
-                            + "</h3>\n"
-                        )
-
-                        for key, value in diccionario.items():
-                            html_file.write(
-                                "                <p><b>"
-                                + str(key)
-                                + ":</b>  "
-                                + str(value)
-                                + "</p>\n"
-                            )
-
-                        html_file.write("            </div>\n\n")
-                        num_diccionario += 1
-                        if num_diccionario == num:
-                            err += 1
-
-                    html_file.write("        </div>\n\n")
-                    num_registro += 1
-
-            except:
-                html_file.write("        </div>\n")
-                print("COMPLETO ")
-
-                # Abrir el archivo HTML
-                webbrowser.open("reporte.html")
-
-            html_file.write("    </body>\n" + "</html>")
-
-        else:
-            print("'" + str(num) + "' excede el número total de registros cargados")
+    if isinstance(lista_llaves, str):
+        html_file.write("                    <th><h1>{}</h1></th>\n".format(lista_llaves))
 
     else:
-        print("No se han cargado archivos")
+        for llave in lista_llaves: 
+            html_file.write("                    <th><h1>{}</h1></th>\n".format(llave))
+
+    html_file.write("                </tr>\n")
+    html_file.write("            </thead>\n\n")
+
+
+    html_file.write("            <tbody>\n") # CUERPO DE LA TABLA
+    for tupla in lista_tuplas:
+
+        html_file.write("                <tr>\n")
+        
+        if isinstance(tupla, str):
+            html_file.write("                    <td>{}</td>\n".format(tupla))
+
+        else:
+            for atributo in tupla:            
+                html_file.write("                    <td>{}</td>\n".format(atributo))
+        
+        html_file.write("                </tr>\n\n")
+
+    html_file.write("            </tbody>\n        </table>\n"+"    </body>\n" + "</html>")
+
+
+    webbrowser.open(nombre_reporte+".html") # Abrir el archivo HTML
 
 
 def Script(scripts):
@@ -699,14 +1220,11 @@ def Script(scripts):
             Mensaje("No se encontró el archivo " + archivo)
 
 
-# ================> AFD <====================
-
-
-#        ~~> SimpleSQL CLI <~~
+# ================> SIMPLESQL CLI <====================
 
 
 def SimpleSQL(Instruccion):
-
+    global reporte, nombre_reporte
     exit, late_exit, coma, comilla = False, False, False, False
     estado = 0
     error_msg, nombre_set, conjuncion = "", "", ""
@@ -727,7 +1245,7 @@ def SimpleSQL(Instruccion):
 
         try:
             for char in query:
-
+                
                 if char in tk_comilla:
 
                     if comilla:
@@ -748,13 +1266,13 @@ def SimpleSQL(Instruccion):
 
                 elif estado == 0:  # INICIO
 
-                    if word in tk_create:
+                    if word in tk_create and reporte == False:
                         estado = 1
 
-                    elif word in tk_load:
+                    elif word in tk_load and reporte == False:
                         estado = 11
 
-                    elif word in tk_use:
+                    elif word in tk_use and reporte == False:
                         estado = 21
 
                     elif word in tk_select:
@@ -763,7 +1281,7 @@ def SimpleSQL(Instruccion):
                     elif word in tk_list:
                         estado = 41
 
-                    elif word in tk_print:
+                    elif word in tk_print and reporte == False:
                         estado = 51
 
                     elif word in tk_max:
@@ -778,25 +1296,28 @@ def SimpleSQL(Instruccion):
                     elif word in tk_count:
                         estado = 91
 
-                    elif word in tk_report:
+                    elif word in tk_report and reporte == False:
                         estado = 101
 
-                    elif word in tk_script:
+                    elif word in tk_script and reporte == False:
                         estado = 111
 
-                    elif word in tk_help:
+                    elif word in tk_help and reporte == False:
                         estado = 121
 
                     elif word in tk_close:
-                        print(Cend)
+                        print(".."+Cend)
                         exit = True
 
                     else:
 
-                        if word != ";":
-                            error_msg = ""
+                        if reporte == True:
+                            error_msg = "No se puede reportar el comando '"+word+"'"
+
+                        elif word != ";":
                             error_msg = "No se reconoció la palabra " + word
-                            estado = -1
+
+                        estado = -1
 
                     word = ""
 
@@ -1366,7 +1887,7 @@ def SimpleSQL(Instruccion):
 
                     else:
                         if word in tk_scolon:
-                            
+
                             Count(lista_llaves)
                             lista_llaves = []
                             estado = 150
@@ -1407,7 +1928,7 @@ def SimpleSQL(Instruccion):
                         estado = 102
 
                     elif word in tk_tokens:
-                        Report()
+                        Report("tokens")
                         estado = 150
 
                         if late_exit == True:
@@ -1432,7 +1953,10 @@ def SimpleSQL(Instruccion):
                 elif estado == 102:
 
                     if Palabra(word):
-                        estado = 103
+                        
+                        nombre_reporte = word
+                        reporte = True
+                        estado = 0
 
                     else:
 
@@ -1441,27 +1965,6 @@ def SimpleSQL(Instruccion):
 
                         else:
                             error_msg = word + " no es un nombre válido"
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 103:
-
-                    if word:  # is comando
-                        Report("comando")
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un comando"
-
-                        else:
-                            error_msg = word + " no es comando válido"
 
                         estado = -1
 
@@ -1552,559 +2055,10 @@ def SimpleSQL(Instruccion):
         except:
             pass
 
-        estado, error_msg, lista_llaves = 0, "", []
+        estado, error_msg, lista_llaves, reporte = 0, "", [], False
 
 
-#        ~~> AON <~~
+# ================> EJECUCIÓN <====================
 
-
-def AON(string):  # PARSER, ARCHIVOS .AON
-    word, palabras, llave = "", "", ""
-    archivo, diccionario = [], {}
-    accum = False
-
-    estado, count = 0, 0
-    try:
-        for char in string:
-            count += 1
-
-            if (char not in tk_blank and char != "\n") or accum == True:
-
-                if estado in [3] and accum == True:
-                    word = word + char
-
-                    if string[count] in ["]"]:
-                        accum = False
-
-                elif estado in [6] and accum == True:
-                    if char not in tk_blank + ["\n"]:
-                        word = word + char
-
-                    if string[count] in [",", ">", " "] or char in tk_comilla:
-                        accum = False
-
-                elif estado in [9, 10] and accum == True:
-                    word = word + char
-                    if (
-                        string[count] in tk_comilla + tk_blank
-                        or char in tk_comilla + tk_blank
-                    ):
-                        accum = False
-
-                if accum == False:
-
-                    if estado == 0:
-
-                        if char in tk_parA:
-                            estado = 1
-
-                        else:
-                            estado = -1
-
-                    elif estado == 1:
-
-                        if char in tk_menorQ:
-                            diccionario = {}
-                            estado = 2
-
-                        else:
-                            estado = -1
-
-                    elif estado == 2:
-
-                        if char in tk_corchA:
-                            accum = True
-                            estado = 3
-
-                        else:
-                            estado = -1
-
-                    elif estado == 3:
-
-                        if Palabra(word):
-                            llave = word.strip()
-                            word = ""
-                            estado = 4
-
-                        else:
-                            estado = -1
-
-                    elif estado == 4:
-
-                        if char in tk_corchB:
-                            estado = 5
-
-                        else:
-                            estado = -1
-
-                    elif estado == 5:
-
-                        if char in tk_igual:
-                            accum = True
-                            estado = 6
-
-                        else:
-                            estado = -1
-
-                    elif estado == 6:
-
-                        if Numero(word.strip()):
-
-                            valor = float(word)
-                            diccionario[llave] = valor
-                            word = ""
-                            estado = 7
-
-                        elif char in tk_comilla:
-
-                            word = ""
-                            accum = True
-                            estado = 9
-
-                        elif Booleano(word) in [True, False, None]:
-
-                            valor = Booleano(word)
-                            diccionario[llave] = valor
-                            word = ""
-                            estado = 8
-
-                        else:
-                            estado = -1
-
-                    elif estado == 7:
-
-                        if char in tk_coma:
-                            estado = 2
-
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
-
-                        else:
-                            estado = -1
-
-                    elif estado == 8:
-
-                        if char in tk_coma:
-                            estado = 2
-
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
-
-                        else:
-                            estado = -1
-
-                    elif estado == 9:
-
-                        if Palabra(word):
-                            palabras = word
-                            word = ""
-                            accum = True
-                            estado = 10
-
-                        else:
-                            estado = -1
-
-                    elif estado == 10:
-
-                        if char in tk_comilla:
-                            valor = palabras
-                            diccionario[llave] = valor
-                            word, palabras = "", ""
-                            estado = 11
-
-                        elif Palabra(word) or word in tk_blank:
-                            palabras = palabras + word
-                            word = ""
-                            accum = True
-                            estado = 10
-
-                        else:
-                            estado = -1
-
-                    elif estado == 11:
-
-                        if char in tk_coma:
-                            estado = 2
-
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
-
-                        else:
-                            estado = -1
-
-                    elif estado == 12:
-
-                        if char in tk_coma:
-                            estado = 1
-
-                        elif char in tk_parB:
-                            estado = 13
-
-                        else:
-                            estado = -1
-
-                    if estado == 13:
-                        return archivo
-
-                    if estado == -1:
-                        err += 1
-
-    except:
-
-        Mensaje("El archivo no es un archivo AON válido")
-
-
-#        ~~> Archivo AON <~~
-
-
-def ArchivoAON(word):
-
-    estado, count = 0, 0
-
-    for char in word:
-        count += 1
-
-        if estado == 0:
-
-            if char in tk_letra + tk_digito:
-                estado = 1
-
-        elif estado == 1:
-
-            if char in tk_letra + tk_digito:
-                estado = 1
-
-            elif char in tk_punto:
-                estado = 2
-
-            else:
-                return False
-
-        elif estado == 2:
-
-            if char == "a":
-                estado = 3
-
-            else:
-                return False
-
-        elif estado == 3:
-
-            if char == "o":
-                estado = 4
-
-            else:
-                return False
-
-        elif estado == 4:
-
-            if char == "n" and count == len(word):
-                return True
-
-            else:
-                return False
-
-
-#        ~~> Archivo SIQL <~~
-
-
-def ArchivoSIQL(word):
-    estado, count = 0, 0
-
-    for char in word:
-        count += 1
-
-        if estado == 0:
-
-            if char in tk_letra + tk_digito:
-                estado = 1
-
-        elif estado == 1:
-
-            if char in tk_letra + tk_digito:
-                estado = 1
-
-            elif char in tk_punto:
-                estado = 2
-
-            else:
-                return False
-
-        elif estado == 2:
-
-            if char == "s":
-                estado = 3
-
-            else:
-                return False
-
-        elif estado == 3:
-
-            if char == "i":
-                estado = 4
-
-            else:
-                return False
-
-        elif estado == 4:
-
-            if char == "q":
-                estado = 5
-
-            else:
-                return False
-
-        elif estado == 5:
-
-            if char == "l" and count == len(word):
-                estado = 5
-                return True
-
-            else:
-                return False
-
-
-#        ~~> Palabra <~~
-
-
-def Palabra(word):
-
-    if word in reserved:
-        Mensaje("'" + word + "' es una palabra reservada")
-        return False
-
-    estado = 0
-
-    for char in word:
-
-        if estado == 0:
-
-            if char in tk_texto:
-                estado = 1
-
-            else:
-                return False
-
-        elif estado == 1:
-
-            if char in tk_texto:
-                estado = 1
-
-            else:
-                return False
-
-    return True
-
-
-#        ~~> Numero <~~
-
-
-def Numero(word):
-    estado = 0
-
-    for char in str(word):
-
-        if estado == 0:
-
-            if char in tk_guion:
-                estado = 1
-
-            elif char in tk_digito:
-                estado = 2
-
-            else:
-                return False
-
-        elif estado == 1:
-
-            if char in tk_digito:
-                estado = 2
-
-            else:
-                return False
-
-        elif estado == 2:
-
-            if char in tk_digito:
-                estado = 2
-
-            elif char in tk_punto:
-                estado = 3
-
-            else:
-                return False
-
-        elif estado == 3:
-
-            if char in tk_digito:
-                estado = 4
-
-            else:
-                return False
-
-        elif estado == 4:
-
-            if char in tk_digito:
-                estado = 4
-
-    return True
-
-
-#        ~~> Booleano <~~
-
-
-def Booleano(word):
-    estado, count = 0, 0
-
-    for char in word:
-        count += 1
-
-        if estado == 0:
-
-            if char == "t":
-                estado = 1
-
-            elif char == "f":
-                estado = 5
-
-            else:
-                return None
-
-        elif estado == 1:
-
-            if char == "r":
-                estado = 2
-
-            else:
-                return None
-
-        elif estado == 2:
-
-            if char == "u":
-                estado = 3
-
-            else:
-                return None
-
-        elif estado == 3:
-
-            if char == "e" and count == len(word):
-                return True
-
-            else:
-                return None
-
-        elif estado == 5:
-
-            if char == "a":
-                estado = 6
-
-            else:
-                return None
-
-        elif estado == 6:
-
-            if char == "l":
-                estado = 7
-
-            else:
-                return None
-
-        elif estado == 7:
-
-            if char == "s":
-                estado = 8
-
-            else:
-                return None
-
-        elif estado == 8:
-
-            if char == "e" and count == len(word):
-                return False
-
-            else:
-                return None
-
-
-#        ~~> Condicion <~~
-
-
-def Condicion(string):
-    estado = 0
-
-    for char in string:
-
-        if char != " " and char != "/n":
-
-            if estado == 0:
-
-                if char in tk_letra:
-                    estado = 1
-
-                else:
-                    return False
-
-            elif estado == 1:
-
-                if char in tk_texto:
-                    estado = 1
-
-                elif char in tk_igual:
-                    estado = 2
-
-                else:
-                    return False
-
-            elif estado == 2:
-
-                if char in tk_comilla:
-                    estado = 3
-
-                elif char in tk_digito:
-                    estado = 4
-
-                elif char in tk_letra:
-                    estado = 9999
-
-            elif estado == 3:
-
-                if char in tk_letra:
-                    estado = 3
-
-                elif char in tk_comilla:
-                    estado = "gg"
-
-    return True
-
-
-#        ~~> RegEx <~~
-
-
-def RegEx(string):
-    estado = 0
-
-    for char in string:
-
-        if estado == 0:
-
-            if char in tk_letra:
-                estado = 1
-
-        elif estado == 1:
-
-            if char in tk_letra:
-                estado = 1
-
-            else:
-                return False
-
-    return True
-
-
-# EJECUCIÓN
 
 SimpleSQL("")
