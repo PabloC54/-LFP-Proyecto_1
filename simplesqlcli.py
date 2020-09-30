@@ -121,6 +121,29 @@ tk_menor_igual = ["<="]
 tk_operadores = tk_menorQ+tk_mayorQ+tk_igual + \
     tk_menor_igual+tk_mayor_igual+tk_no_igual
 
+dict_tokens = {
+    'tk_reservado': ["descripcion", []],
+    'tk_operador': ["descripcion", []],
+    'tk_archivo': ["descripcion", []],
+    'tk_parA': ["descripcion", []],
+    'tk_parB': ["descripcion", []],
+    'tk_menorQ': ["descripcion", []],
+    'tk_mayorQ': ["descripcion", []],
+    'tk_corchA': ["descripcion", []],
+    'tk_corchB': ["descripcion", []],
+    'tk_igual': ["descripcion", []],
+    'tk_coma': ["descripcion", []],
+    'tk_punto': ["descripcion", []],
+    'tk_scolon': ["descripcion", []],
+    'tk_guion': ["descripcion", []],
+    'tk_asterisco': ["descripcion", []],
+    'tk_comilla': ["descripcion", []],
+    'tk_numero': ["descripcion", []],
+    'tk_cadena': ["descripcion", []],
+    'tk_booleano': ["descripcion", []],
+    'tk_color': ["descripcion", []]
+}
+
 
 # ================> AFD AUXILIARES <====================
 
@@ -131,197 +154,211 @@ def AON(string):  # PARSER, ARCHIVOS .AON
     accum = False
 
     estado, count = 0, 0
-    try:
-        for char in string:
-            count += 1
 
-            if (char not in tk_blank and char != "\n") or accum == True:
+    for char in string:
+        count += 1
 
-                if estado in [3] and accum == True:
+        if (char not in tk_blank and char != "\n") or accum == True:
+
+            if estado in [3] and accum == True:
+                word = word + char
+
+                if string[count] in ["]"]:
+                    accum = False
+
+            elif estado in [6] and accum == True:
+                if char not in tk_blank + ["\n"]:
                     word = word + char
 
-                    if string[count] in ["]"]:
-                        accum = False
+                if string[count] in [",", ">", " "] or char in tk_comilla:
+                    accum = False
 
-                elif estado in [6] and accum == True:
-                    if char not in tk_blank + ["\n"]:
-                        word = word + char
+            elif estado in [9, 10] and accum == True:
+                word = word + char
+                if (
+                    string[count] in tk_comilla + tk_blank
+                    or char in tk_comilla + tk_blank
+                ):
+                    accum = False
 
-                    if string[count] in [",", ">", " "] or char in tk_comilla:
-                        accum = False
+            if accum == False:
 
-                elif estado in [9, 10] and accum == True:
-                    word = word + char
-                    if (
-                        string[count] in tk_comilla + tk_blank
-                        or char in tk_comilla + tk_blank
-                    ):
-                        accum = False
+                if estado == 0:
 
-                if accum == False:
+                    if char in tk_parA:
+                        dict_tokens["tk_parA"][1].append(char)
+                        estado = 1
 
-                    if estado == 0:
+                    else:
+                        estado = -1
 
-                        if char in tk_parA:
-                            estado = 1
+                elif estado == 1:
 
-                        else:
-                            estado = -1
+                    if char in tk_menorQ:
+                        dict_tokens["tk_menorQ"][1].append(char)
+                        diccionario = {}
+                        estado = 2
 
-                    elif estado == 1:
+                    else:
+                        estado = -1
 
-                        if char in tk_menorQ:
-                            diccionario = {}
-                            estado = 2
+                elif estado == 2:
 
-                        else:
-                            estado = -1
+                    if char in tk_corchA:
+                        dict_tokens["tk_corchA"][1].append(char)
+                        accum = True
+                        estado = 3
 
-                    elif estado == 2:
+                    else:
+                        estado = -1
 
-                        if char in tk_corchA:
-                            accum = True
-                            estado = 3
+                elif estado == 3:
 
-                        else:
-                            estado = -1
+                    if Palabra(word):
+                        llave = word.strip()
+                        word = ""
+                        estado = 4
 
-                    elif estado == 3:
+                    else:
+                        estado = -1
 
-                        if Palabra(word):
-                            llave = word.strip()
-                            word = ""
-                            estado = 4
+                elif estado == 4:
 
-                        else:
-                            estado = -1
+                    if char in tk_corchB:
+                        dict_tokens["tk_corchB"][1].append(char)
+                        estado = 5
 
-                    elif estado == 4:
+                    else:
+                        estado = -1
 
-                        if char in tk_corchB:
-                            estado = 5
+                elif estado == 5:
 
-                        else:
-                            estado = -1
+                    if char in tk_igual:
+                        dict_tokens["tk_igual"][1].append(char)
+                        accum = True
+                        estado = 6
 
-                    elif estado == 5:
+                    else:
+                        estado = -1
 
-                        if char in tk_igual:
-                            accum = True
-                            estado = 6
+                elif estado == 6:
 
-                        else:
-                            estado = -1
+                    if Numero(word.strip()):
 
-                    elif estado == 6:
+                        valor = float(word)
+                        diccionario[llave] = valor
+                        word = ""
+                        estado = 7
 
-                        if Numero(word.strip()):
+                    elif char in tk_comilla:
+                        dict_tokens["tk_comilla"][1].append(char)
 
-                            valor = float(word)
-                            diccionario[llave] = valor
-                            word = ""
-                            estado = 7
+                        word = ""
+                        accum = True
+                        estado = 9
 
-                        elif char in tk_comilla:
+                    elif Booleano(word) in [True, False, None]:
 
-                            word = ""
-                            accum = True
-                            estado = 9
+                        valor = Booleano(word)
+                        diccionario[llave] = valor
+                        word = ""
+                        estado = 8
 
-                        elif Booleano(word) in [True, False, None]:
+                    else:
+                        estado = -1
 
-                            valor = Booleano(word)
-                            diccionario[llave] = valor
-                            word = ""
-                            estado = 8
+                elif estado == 7:
 
-                        else:
-                            estado = -1
+                    if char in tk_coma:
+                        dict_tokens["tk_coma"][1].append(char)
+                        estado = 2
 
-                    elif estado == 7:
+                    elif char in tk_mayorQ:
+                        dict_tokens["tk_mayorQ"][1].append(char)
+                        archivo.append(diccionario)
+                        estado = 12
 
-                        if char in tk_coma:
-                            estado = 2
+                    else:
+                        estado = -1
 
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
+                elif estado == 8:
 
-                        else:
-                            estado = -1
+                    if char in tk_coma:
+                        dict_tokens["tk_coma"][1].append(char)
+                        estado = 2
 
-                    elif estado == 8:
+                    elif char in tk_mayorQ:
+                        dict_tokens["tk_mayorQ"][1].append(char)
+                        archivo.append(diccionario)
+                        estado = 12
 
-                        if char in tk_coma:
-                            estado = 2
+                    else:
+                        estado = -1
 
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
+                elif estado == 9:
 
-                        else:
-                            estado = -1
+                    if Palabra(word):
+                        dict_tokens["tk_cadena"][1].append(char)
+                        palabras = word
+                        word = ""
+                        accum = True
+                        estado = 10
 
-                    elif estado == 9:
+                    else:
+                        estado = -1
 
-                        if Palabra(word):
-                            palabras = word
-                            word = ""
-                            accum = True
-                            estado = 10
+                elif estado == 10:
 
-                        else:
-                            estado = -1
+                    if char in tk_comilla:
+                        dict_tokens["tk_comilla"][1].append(char)
+                        valor = palabras
+                        diccionario[llave] = valor
+                        word, palabras = "", ""
+                        estado = 11
 
-                    elif estado == 10:
+                    elif Palabra(word) or word in tk_blank:
+                        dict_tokens["tk_cadena"][1].append(char)
+                        palabras = palabras + word
+                        word = ""
+                        accum = True
+                        estado = 10
 
-                        if char in tk_comilla:
-                            valor = palabras
-                            diccionario[llave] = valor
-                            word, palabras = "", ""
-                            estado = 11
+                    else:
+                        estado = -1
 
-                        elif Palabra(word) or word in tk_blank:
-                            palabras = palabras + word
-                            word = ""
-                            accum = True
-                            estado = 10
+                elif estado == 11:
 
-                        else:
-                            estado = -1
+                    if char in tk_coma:
+                        dict_tokens["tk_coma"][1].append(char)
+                        estado = 2
 
-                    elif estado == 11:
+                    elif char in tk_mayorQ:
+                        dict_tokens["tk_mayorQ"][1].append(char)
+                        archivo.append(diccionario)
+                        estado = 12
 
-                        if char in tk_coma:
-                            estado = 2
+                    else:
+                        estado = -1
 
-                        elif char in tk_mayorQ:
-                            archivo.append(diccionario)
-                            estado = 12
+                elif estado == 12:
 
-                        else:
-                            estado = -1
+                    if char in tk_coma:
+                        dict_tokens["tk_coma"][1].append(char)
+                        estado = 1
 
-                    elif estado == 12:
+                    elif char in tk_parB:
+                        dict_tokens["tk_parB"][1].append(char)
+                        estado = 13
 
-                        if char in tk_coma:
-                            estado = 1
+                    else:
+                        estado = -1
 
-                        elif char in tk_parB:
-                            estado = 13
+                if estado == 13:
+                    return archivo
 
-                        else:
-                            estado = -1
-
-                    if estado == 13:
-                        return archivo
-
-                    if estado == -1:
-                        err += 1
-
-    except:
-
-        Mensaje("El archivo no es un archivo AON válido")
+                if estado == -1:
+                    Mensaje("El archivo no es un archivo AON válido")
+                    estado = -2
 
 
 def ArchivoAON(word):
@@ -465,6 +502,7 @@ def Numero(word):
         if estado == 0:
 
             if char in tk_guion:
+                dict_tokens["tk_guion"][1].append(char)
                 estado = 1
 
             elif char in tk_digito:
@@ -505,6 +543,10 @@ def Numero(word):
             if char in tk_digito:
                 estado = 4
 
+            else:
+                return False
+
+    dict_tokens["tk_numero"][1].append(word)
     return True
 
 
@@ -576,58 +618,11 @@ def Booleano(word):
         elif estado == 8:
 
             if char == "e" and count == len(word):
+                dict_tokens["tk_booleano"][1].append(word)
                 return False
 
             else:
                 return None
-
-
-def Condicion(string):
-    estado = 0
-
-    for char in string:
-
-        if char != " " and char != "/n":
-
-            if estado == 0:
-
-                if char in tk_letra:
-                    estado = 1
-
-                else:
-                    return False
-
-            elif estado == 1:
-
-                if char in tk_texto:
-                    estado = 1
-
-                elif char in tk_igual:
-                    estado = 2
-
-                else:
-                    return False
-
-            elif estado == 2:
-
-                if char in tk_comilla:
-                    estado = 3
-
-                elif char in tk_digito:
-                    estado = 4
-
-                elif char in tk_letra:
-                    estado = 9999
-
-            elif estado == 3:
-
-                if char in tk_letra:
-                    estado = 3
-
-                elif char in tk_comilla:
-                    estado = "gg"
-
-    return True
 
 
 def RegEx(string):
@@ -659,14 +654,14 @@ def Mensaje(texto):
     if texto:
         print(
             "\n\x1b[0;30;41m"
-            + ">>>>>>>>>>>>>"
+            + " >>>>>>>>>>>> "
             + Cend
             + "  "
             + Cbegin
             + texto
             + Cend
             + "  \x1b[0;30;41m"
-            + "<<<<<<<<<<<<<"
+            + " <<<<<<<<<<<< "
             + Cend
             + "\n"
         )
@@ -781,14 +776,15 @@ def Load(nombre, archivos):
 def Use(nombre):
 
     global selected_set
-    seleted_set = set_files[set_names.index(nombre)]
+    selected_set = set_files[set_names.index(nombre)]
 
 
 def Select(lista_llaves, condicion, conjuncion):
-    
+    print(lista_llaves, condicion, conjuncion)
     global selected_set
     lista_tuplas, lista_final = [], []
     diccionario_prueba = {}
+    condicion_llave, condicion_operador, condicion_valor = "", "", ""
 
     try:
 
@@ -910,6 +906,7 @@ def Select(lista_llaves, condicion, conjuncion):
         if len(lista_tuplas) >= 2:
 
             if conjuncion in tk_and:
+                dict_tokens["tk_operador"][1].append(conjuncion)
 
                 for tupla in lista_tuplas[0]:
 
@@ -917,6 +914,7 @@ def Select(lista_llaves, condicion, conjuncion):
                         lista_final.append(tupla)
 
             elif conjuncion in tk_or:
+                dict_tokens["tk_operador"][1].append(conjuncion)
 
                 lista_final = lista_tuplas[0]
                 for tupla in lista_tuplas[1]:
@@ -925,6 +923,7 @@ def Select(lista_llaves, condicion, conjuncion):
                         lista_final.append(tupla)
 
             elif conjuncion in tk_xor:
+                dict_tokens["tk_operador"][1].append(conjuncion)
 
                 lista_final = lista_tuplas[0]
                 for tupla in lista_tuplas[1]:
@@ -942,7 +941,7 @@ def Select(lista_llaves, condicion, conjuncion):
         else:
             lista_final = lista_tuplas[0]
 
-        if reporte:              
+        if reporte:
             Report(lista_llaves, lista_final)
 
         else:
@@ -1019,15 +1018,15 @@ def Print(color):
 
 
 def Max(llave):
-    
+
     if selected_set:
 
         valor_maximo = selected_set[0][0][llave]
 
         for archivo in selected_set:
-            
+
             for diccionario in archivo:
-                
+
                 if diccionario[llave] != None:
 
                     if diccionario[llave] > valor_maximo:
@@ -1060,7 +1059,7 @@ def Min(llave):
 
         if reporte:
             Report(llave, [str(valor_minimo)])
-            
+
         else:
             print("\n", Cbegin + str(valor_minimo) + Cend, "\n")
 
@@ -1095,7 +1094,7 @@ def Sum(lista_llaves):
 
         if reporte:
             Report(lista_llaves, [lista_sumas])
-            
+
         else:
             header = "    ||    "  # ENCABEZADO
             for llave in lista_llaves:
@@ -1133,10 +1132,9 @@ def Count(lista_llaves):
 
         lista_cuentas.append(str(cuenta))
 
-        
     if reporte:
         Report(lista_llaves, [lista_cuentas])
-        
+
     else:
 
         header = "  ||  "  # ENCABEZADO
@@ -1153,7 +1151,7 @@ def Count(lista_llaves):
 
 
 def Report(lista_llaves, lista_tuplas):
-    
+
     html_file = open(nombre_reporte+".html", "w")
 
     html_file.write(  # ENCABEZADO
@@ -1161,47 +1159,48 @@ def Report(lista_llaves, lista_tuplas):
         + "<html>\n"
         + "    <head>\n"
         + "        <title>Reporte de registros</title>\n"
-        
+
         + "    <link rel='stylesheet' type='text/css' href='style.css'/>\n"
         + "    </head>\n"
         + "    <body>\n"
     )
 
+    html_file.write("        <table class='container'>\n")  # TABLA
+    html_file.write("            <thead>\n")  # ENCABEZADO DE LA TABLA
 
-    html_file.write("        <table class='container'>\n") # TABLA
-    html_file.write("            <thead>\n") # ENCABEZADO DE LA TABLA
-
-    html_file.write("                <tr>\n") 
+    html_file.write("                <tr>\n")
 
     if isinstance(lista_llaves, str):
-        html_file.write("                    <th><h1>{}</h1></th>\n".format(lista_llaves))
+        html_file.write(
+            "                    <th><h1>{}</h1></th>\n".format(lista_llaves))
 
     else:
-        for llave in lista_llaves: 
-            html_file.write("                    <th><h1>{}</h1></th>\n".format(llave))
+        for llave in lista_llaves:
+            html_file.write(
+                "                    <th><h1>{}</h1></th>\n".format(llave))
 
     html_file.write("                </tr>\n")
     html_file.write("            </thead>\n\n")
 
-
-    html_file.write("            <tbody>\n") # CUERPO DE LA TABLA
+    html_file.write("            <tbody>\n")  # CUERPO DE LA TABLA
     for tupla in lista_tuplas:
 
         html_file.write("                <tr>\n")
-        
+
         if isinstance(tupla, str):
             html_file.write("                    <td>{}</td>\n".format(tupla))
 
         else:
-            for atributo in tupla:            
-                html_file.write("                    <td>{}</td>\n".format(atributo))
-        
+            for atributo in tupla:
+                html_file.write(
+                    "                    <td>{}</td>\n".format(atributo))
+
         html_file.write("                </tr>\n\n")
 
-    html_file.write("            </tbody>\n        </table>\n"+"    </body>\n" + "</html>")
+    html_file.write("            </tbody>\n        </table>\n" +
+                    "    </body>\n" + "</html>")
 
-
-    webbrowser.open(nombre_reporte+".html") # Abrir el archivo HTML
+    webbrowser.open(nombre_reporte+".html")  # Abrir el archivo HTML
 
 
 def Script(scripts):
@@ -1216,15 +1215,16 @@ def Script(scripts):
 
             temp.close()
 
-        except:
+        except Exception:
             Mensaje("No se encontró el archivo " + archivo)
+            traceback.print_exc()
 
 
 # ================> SIMPLESQL CLI <====================
 
 
 def SimpleSQL(Instruccion):
-    global reporte, nombre_reporte
+    global reporte, nombre_reporte, tk_tokens
     exit, late_exit, coma, comilla = False, False, False, False
     estado = 0
     error_msg, nombre_set, conjuncion = "", "", ""
@@ -1233,7 +1233,18 @@ def SimpleSQL(Instruccion):
     while exit == False:
 
         if Instruccion:
-            query = Instruccion.strip().lower() + " "
+            query = Instruccion.strip() + " "
+
+            for char in query:
+                if char in tk_comilla:
+                    if comilla==True:
+                        comilla==False
+                    else:
+                        comilla==True
+
+                if comilla==False:
+                    char.lower()
+
             print(Hcolor+" >> "+Cend+" "+Cbegin+query+Cend)
             word, Instruccion = "", ""
             late_exit = True
@@ -1243,819 +1254,889 @@ def SimpleSQL(Instruccion):
                           Cbegin).strip().lower() + " ; "+Cend
             word = ""
 
-        try:
-            for char in query:
-                
-                if char in tk_comilla:
+        for char in query:
 
-                    if comilla:
-                        comilla = False
+            if char in tk_comilla:
+                dict_tokens["tk_comilla"][1].append(char)
+                if comilla:
+                    comilla = False
 
-                    else:
-                        comilla = True
+                else:
+                    comilla = True
 
-                if char in tk_coma and comilla == False:
-                    coma = True
+            if char in tk_coma and comilla == False:
+                dict_tokens["tk_coma"][1].append(char)
+                coma = True
 
-                if char not in tk_blank + tk_coma or comilla == True:
+            if char not in tk_blank + tk_coma or comilla == True:
 
-                    if estado != 35:
-                        char.lower()
+                if comilla != True:
+                    char.lower()
 
-                    word = word + char
+                word = word + char
 
-                elif estado == 0:  # INICIO
+            elif estado == 0:  # INICIO
 
-                    if word in tk_create and reporte == False:
-                        estado = 1
+                if word in tk_create and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 1
 
-                    elif word in tk_load and reporte == False:
-                        estado = 11
+                elif word in tk_load and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 11
 
-                    elif word in tk_use and reporte == False:
-                        estado = 21
+                elif word in tk_use and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 21
 
-                    elif word in tk_select:
-                        estado = 31
+                elif word in tk_select:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 31
 
-                    elif word in tk_list:
-                        estado = 41
+                elif word in tk_list:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 41
 
-                    elif word in tk_print and reporte == False:
-                        estado = 51
+                elif word in tk_print and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 51
 
-                    elif word in tk_max:
-                        estado = 61
+                elif word in tk_max:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 61
 
-                    elif word in tk_min:
-                        estado = 71
+                elif word in tk_min:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 71
 
-                    elif word in tk_sum:
-                        estado = 81
+                elif word in tk_sum:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 81
 
-                    elif word in tk_count:
-                        estado = 91
+                elif word in tk_count:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 91
 
-                    elif word in tk_report and reporte == False:
-                        estado = 101
+                elif word in tk_report and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 101
 
-                    elif word in tk_script and reporte == False:
-                        estado = 111
+                elif word in tk_script and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 111
 
-                    elif word in tk_help and reporte == False:
-                        estado = 121
+                elif word in tk_help and reporte == False:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 121
 
-                    elif word in tk_close:
-                        print(".."+Cend)
-                        exit = True
+                elif word in tk_close:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    print(Cbegin+".."+Cend)
+                    exit = True
 
-                    else:
+                else:
 
-                        if reporte == True:
-                            error_msg = "No se puede reportar el comando '"+word+"'"
+                    if reporte == True:
+                        error_msg = "No se puede reportar el comando '"+word+"'"
 
-                        elif word != ";":
-                            error_msg = "No se reconoció la palabra " + word
+                    elif word != ";":
+                        error_msg = "No se reconoció la palabra " + word
 
-                        estado = -1
+                    estado = -1
 
-                    word = ""
+                word = ""
 
-                # ------> CREATE <--------
+            # ------> CREATE <--------
 
-                elif estado == 1:
+            elif estado == 1:
 
-                    if word in tk_set:
-                        estado = 2
+                if word in tk_set:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 2
 
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'set'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'set'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 2:
-
-                    if Palabra(word):
-                        Create(word)
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un nombre para el set"
-
-                        else:
-                            error_msg = "Nombre de set no válido"
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> LOAD <--------
-
-                elif estado == 11:
-
-                    if word in tk_into:
-                        estado = 12
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'into'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'into'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 12:
-
-                    if word in set_names:
-                        nombre_set = word
-                        archivos_set = []
-
-                        estado = 13
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un set"
-
-                        else:
-                            error_msg = "No existe el set " + word
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 13:
-
-                    if word in tk_files:
-                        estado = 14
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'files'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'files'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 14:
-
-                    if ArchivoAON(word):
-                        archivos_set.append(word)
-                        estado = 15
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un archivo AON"
-
-                        else:
-                            error_msg = word + " no es un archivo AON"
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 15:
-
-                    if coma == True:
-
-                        coma = False
-                        estado = 14
-
-                    else:
-
-                        if word in tk_scolon:
-                            Load(nombre_set, archivos_set)
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Archivos múltiples se separan por comas"
-                            )
-                            estado = -1
-
-                    word = ""
-
-                # ------> USE <--------
-
-                elif estado == 21:
-
-                    if word in tk_set:
-                        estado = 22
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'set'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'set'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 22:
-
-                    if word in set_names:
-                        Use(word)
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un set"
-
-                        else:
-                            error_msg = "No existe el set " + word
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> SELECT <--------
-
-                elif estado == 31:
-
-                    if word in tk_asterisco:
-                        lista_llaves = ["*"]
-                        estado = 32
-
-                    elif Palabra(word):
-                        lista_llaves = [word]
-                        estado = 33
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = "No se reconoció la palabra " + word + "."
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 32:  # *
-
-                    if word in tk_where:
-                        estado = 35
-
-                    else:
-
-                        if word in tk_scolon:
-                            Select(lista_llaves, condicion, conjuncion)
-                            lista_llaves, condicion, conjuncion = [], [], ""
-                            estado = 150
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'where'"
-                            )
-
-                            estado = -1
-
-                    word = ""
-
-                elif estado == 33:
-
-                    if coma == True:
-                        coma = False
-                        estado = 34
-
-                    elif word in tk_where:
-                        estado = 35
-
-                    else:
-
-                        if word in tk_scolon:
-                            Select(lista_llaves, condicion, conjuncion)
-                            lista_llaves, condicion, conjuncion = [], [], ""
-                            estado = 150
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Múltiples archivos se separan por comas"
-                            )
-
-                            estado = -1
-
-                    word = ""
-
-                elif estado == 34:
-
-                    if Palabra(word):
-                        lista_llaves.append(word)
-                        estado = 33
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un atributo"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 35:  # where
-
-                    if (Palabra(word) or Numero(word) or Booleano(word) in [True, False, None] or word in tk_operadores) and comilla == False:
-                        condicion.append(word)
-
-                        if len(condicion) % 3 == 0 and comilla == False:  # validar condicion
-                            estado = 36
-                        else:
-                            estado = 35
-                    elif comilla == True:
-                        word = word+" "
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba una condición"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba una condición"
-                            )
-
-                        estado = -1
-
-                    if comilla == False:
-                        word = ""
-
-                elif estado == 36:
-
-                    if word in tk_and + tk_or + tk_xor:
-                        conjuncion = word
-                        estado = 35
-
-                    else:
-
-                        if word in tk_scolon:
-
-                            Select(lista_llaves, condicion, conjuncion)
-                            lista_llaves, condicion, conjuncion = [], [], ""
-                            estado = 150
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba una condición"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> LIST <--------
-
-                elif estado == 41:
-
-                    if word in tk_atributes:
-                        List()
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'atributes'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'atributes'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> PRINT <--------
-
-                elif estado == 51:
-
-                    if word in tk_in:
-                        estado = 52
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba 'in'"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba 'in'"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 52:
-
-                    if word in tk_color:
-                        Print(word)
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un color"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un color"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> MAX <--------
-
-                elif estado == 61:
-
-                    if Palabra(word):
-                        Max(word)
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un atributo"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> MIN <--------
-
-                elif estado == 71:
-
-                    if Palabra(word):
-                        Min(word)
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un atributo"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> SUM <--------
-
-                elif estado == 81:
-
-                    if word in tk_asterisco:
-                        Sum(["*"])
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    elif Palabra(word):
-                        lista_llaves.append(word)
-                        estado = 82
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un atributo"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 82:
-
-                    if coma == True:
-                        coma = False
-                        estado = 81
-
-                    else:
-
-                        if word in tk_scolon:
-                            Sum(lista_llaves)
-                            lista_llaves = []
-                            estado = 150
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = "No se reconoció la palabra " + word
-
-                            estado = -1
-
-                    word = ""
-
-                # ------> COUNT <--------
-
-                elif estado == 91:
-
-                    if word in tk_asterisco:
-                        Count(["*"])
-                        estado = 150
-
-                    elif Palabra(word):
-                        lista_llaves.append(word)
-                        estado = 92
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un atributo"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 92:
-
-                    if coma == True:
-                        coma = False
-                        estado = 93
-
-                    else:
-                        if word in tk_scolon:
-
-                            Count(lista_llaves)
-                            lista_llaves = []
-                            estado = 150
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = "No se reconoció la palabra " + word
-
-                            estado = -1
-
-                    word = ""
-
-                elif estado == 93:
-
-                    if Palabra(word):
-                        lista_llaves.append(word)
-                        estado = 92
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un atributo"
-
-                        else:
-                            error_msg = "No se reconoció la palabra " + word
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> REPORTE <--------
-
-                elif estado == 101:
-
-                    if word in tk_to:
-                        estado = 102
-
-                    elif word in tk_tokens:
-                        Report("tokens")
-                        estado = 150
-
-                        if late_exit == True:
-                            exit = True
-
-                    else:
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba to|tokens"
-
-                        else:
-
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba to|tokens"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 102:
-
-                    if Palabra(word):
-                        
-                        nombre_reporte = word
-                        reporte = True
-                        estado = 0
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un nombre"
-
-                        else:
-                            error_msg = word + " no es un nombre válido"
-
-                        estado = -1
-
-                    word = ""
-
-                # ------> SCRIPT <--------
-
-                elif estado == 111:
-
-                    if ArchivoSIQL(word):
-                        scripts.append(word)
-                        estado = 112
-
-                    else:
-
-                        if word in tk_scolon:
-                            error_msg = "Se esperaba un archivo SIQL"
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Se esperaba un archivo SIQL"
-                            )
-
-                        estado = -1
-
-                    word = ""
-
-                elif estado == 112:
-
-                    if coma == True:
-                        coma = False
-                        estado = 111
-
-                    else:
-
-                        if word in tk_scolon:
-
-                            Script(scripts)
-
-                            if late_exit == True:
-                                exit = True
-
-                        else:
-                            error_msg = (
-                                "No se reconoció la palabra "
-                                + word
-                                + ". Archivos múltiples se separan por comas"
-                            )
-                            estado = -1
-
-                    word = ""
-
-                # ------> AYUDA <--------
-
-                elif estado == 121:
+                else:
 
                     if word in tk_scolon:
-                        Ayuda("")
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'set'"
 
                     else:
-                        Ayuda(word)
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'set'"
+                        )
 
-                    word = ""
+                    estado = -1
+
+                word = ""
+
+            elif estado == 2:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    Create(word)
                     estado = 150
 
-                # -----------------------
+                    if late_exit == True:
+                        exit = True
 
-                elif estado == 150:
+                else:
 
-                    if char not in tk_scolon + tk_blank:
-                        error_msg = "No se esperaba " + word
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un nombre para el set"
+
+                    else:
+                        error_msg = "Nombre de set no válido"
+
+                    estado = -1
+
+                word = ""
+
+            # ------> LOAD <--------
+
+            elif estado == 11:
+
+                if word in tk_into:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 12
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'into'"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'into'"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 12:
+
+                if word in set_names:
+                    dict_tokens["tk_cadena"][1].append(word)
+                    nombre_set = word
+                    archivos_set = []
+
+                    estado = 13
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un set"
+
+                    else:
+                        error_msg = "No existe el set " + word
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 13:
+
+                if word in tk_files:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 14
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'files'"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'files'"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 14:
+
+                if ArchivoAON(word):
+                    dict_tokens["tk_archivo"][1].append(word)
+                    archivos_set.append(word)
+                    estado = 15
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un archivo AON"
+
+                    else:
+                        error_msg = word + " no es un archivo AON"
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 15:
+
+                if coma == True:
+                    coma = False
+                    estado = 14
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        Load(nombre_set, archivos_set)
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Archivos múltiples se separan por comas"
+                        )
                         estado = -1
 
+                word = ""
+
+            # ------> USE <--------
+
+            elif estado == 21:
+
+                if word in tk_set:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 22
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'set'"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'set'"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 22:
+
+                if word in set_names:
+                    dict_tokens["tk_cadena"][1].append(word)
+                    Use(word)
+                    estado = 150
+
                     if late_exit == True:
                         exit = True
 
-                if estado == -1:  # ERROR
+                else:
 
-                    Mensaje(error_msg)
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un set"
+
+                    else:
+                        error_msg = "No existe el set " + word
+
+                    estado = -1
+
+                word = ""
+
+            # ------> SELECT <--------
+
+            elif estado == 31:
+
+                if word in tk_asterisco:
+                    dict_tokens["tk_asterisco"][1].append(word)
+                    lista_llaves = ["*"]
+                    estado = 32
+
+                elif Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    lista_llaves = [word]
+                    estado = 33
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = "No se reconoció la palabra " + word + "."
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 32:
+
+                if word in tk_where:
+                    dict_tokens["tk_reserved"][1].append(word)
+                    estado = 35
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        Select(lista_llaves, condicion, conjuncion)
+                        lista_llaves, condicion, conjuncion = [], [], ""
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'where'"
+                        )
+
+                        estado = -1
+
+                word = ""
+
+            elif estado == 33:
+
+                if coma == True:
+                    coma = False
+                    estado = 34
+
+                elif word in tk_where:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 35
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        Select(lista_llaves, condicion, conjuncion)
+                        lista_llaves, condicion, conjuncion = [], [], ""
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Múltiples archivos se separan por comas"
+                        )
+
+                        estado = -1
+
+                word = ""
+
+            elif estado == 34:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    lista_llaves.append(word)
+                    estado = 33
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un atributo"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 35:
+
+                if (Palabra(word) or Numero(word) or Booleano(word) in [True, False, None] or word in tk_operadores) and comilla == False:
+                    condicion.append(word)
+
+                    if len(condicion) % 3 == 0 and comilla == False:  # validar condicion
+                        estado = 36
+                    else:
+                        estado = 35
+                elif comilla == True:
+                    word = word+" "
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba una condición"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba una condición"
+                        )
+
+                    estado = -1
+
+                if comilla == False:
+                    word = ""
+
+            elif estado == 36:
+
+                if word in tk_and + tk_or + tk_xor:
+                    conjuncion = word
+                    estado = 35
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+
+                        Select(lista_llaves, condicion, conjuncion)
+                        lista_llaves, condicion, conjuncion = [], [], ""
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba una condición"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            # ------> LIST <--------
+
+            elif estado == 41:
+
+                if word in tk_atributes:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    List()
+                    estado = 150
 
                     if late_exit == True:
                         exit = True
 
-                    err += 1
+                else:
 
-        except:
-            pass
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'atributes'"
 
-        estado, error_msg, lista_llaves, reporte = 0, "", [], False
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'atributes'"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            # ------> PRINT <--------
+
+            elif estado == 51:
+
+                if word in tk_in:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 52
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba 'in'"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba 'in'"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 52:
+
+                if word in tk_color:
+                    dict_tokens["tk_color"][1].append(word)
+                    Print(word)
+                    estado = 150
+
+                    if late_exit == True:
+                        exit = True
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un color"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un color"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            # ------> MAX <--------
+
+            elif estado == 61:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    Max(word)
+                    estado = 150
+
+                    if late_exit == True:
+                        exit = True
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un atributo"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            # ------> MIN <--------
+
+            elif estado == 71:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    Min(word)
+                    estado = 150
+
+                    if late_exit == True:
+                        exit = True
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un atributo"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            # ------> SUM <--------
+
+            elif estado == 81:
+
+                if word in tk_asterisco:
+                    dict_tokens["tk_asterisco"][1].append(word)
+                    Sum(["*"])
+                    estado = 150
+
+                    if late_exit == True:
+                        exit = True
+
+                elif Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    lista_llaves.append(word)
+                    estado = 82
+
+                else:
+                    if word in tk_scolon:
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un atributo"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 82:
+
+                if coma == True:
+                    coma = False
+                    estado = 81
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        Sum(lista_llaves)
+                        lista_llaves = []
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = "No se reconoció la palabra " + word
+
+                        estado = -1
+
+                word = ""
+
+            # ------> COUNT <--------
+
+            elif estado == 91:
+
+                if word in tk_asterisco:
+                    dict_tokens["tk_asterisco"][1].append(word)
+                    Count(["*"])
+                    estado = 150
+
+                elif Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    lista_llaves.append(word)
+                    estado = 92
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un atributo"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 92:
+
+                if coma == True:
+                    coma = False
+                    estado = 93
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+
+                        Count(lista_llaves)
+                        lista_llaves = []
+                        estado = 150
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = "No se reconoció la palabra " + word
+
+                        estado = -1
+
+                word = ""
+
+            elif estado == 93:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+                    lista_llaves.append(word)
+                    estado = 92
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un atributo"
+
+                    else:
+                        error_msg = "No se reconoció la palabra " + word
+
+                    estado = -1
+
+                word = ""
+
+            # ------> REPORTE <--------
+
+            elif estado == 101:
+
+                if word in tk_to:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    estado = 102
+
+                elif word in tk_tokens:
+                    dict_tokens["tk_reservado"][1].append(word)
+                    lista_tokens = []
+
+                    for llave, valor in dict_tokens.items():
+                        lista_tokens.append([llave, valor[0], str(valor[1])])
+
+                    nombre_reporte = "Tokens"
+                    Report(["Token", "Descripción", "Lexemas"], lista_tokens)
+                    estado = 150
+
+                    if late_exit == True:
+                        exit = True
+
+                else:
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba to|tokens"
+
+                    else:
+
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba to|tokens"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 102:
+
+                if Palabra(word):
+                    dict_tokens["tk_cadena"][1].append(word)
+
+                    nombre_reporte = word
+                    reporte = True
+                    estado = 0
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un nombre"
+
+                    else:
+                        error_msg = word + " no es un nombre válido"
+
+                    estado = -1
+
+                word = ""
+
+            # ------> SCRIPT <--------
+
+            elif estado == 111:
+
+                if ArchivoSIQL(word):
+                    dict_tokens["tk_archivo"][1].append(word)
+                    scripts.append(word)
+                    estado = 112
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+                        error_msg = "Se esperaba un archivo SIQL"
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Se esperaba un archivo SIQL"
+                        )
+
+                    estado = -1
+
+                word = ""
+
+            elif estado == 112:
+
+                if coma == True:
+                    coma = False
+                    estado = 111
+
+                else:
+
+                    if word in tk_scolon:
+                        dict_tokens["tk_scolon"][1].append(word)
+
+                        Script(scripts)
+
+                        if late_exit == True:
+                            exit = True
+
+                    else:
+                        error_msg = (
+                            "No se reconoció la palabra "
+                            + word
+                            + ". Archivos múltiples se separan por comas"
+                        )
+                        estado = -1
+
+                word = ""
+
+            # ------> AYUDA <--------
+
+            elif estado == 121:
+
+                if word in tk_scolon:
+                    dict_tokens["tk_scolon"][1].append(word)
+                    Ayuda("")
+
+                else:
+                    Ayuda(word)
+
+                word = ""
+                estado = 150
+
+            # -----------------------
+
+            elif estado == 150:
+
+                if char not in tk_scolon + tk_blank:
+                    error_msg = "No se esperaba " + word
+                    estado = -1
+
+                if late_exit == True:
+                    exit = True
+
+            if estado == -1:  # ERROR
+
+                Mensaje(error_msg)
+                error_msg = ""
+                if late_exit == True:
+                    exit = True
+
+        estado, lista_llaves, reporte = 0, [], False
 
 
 # ================> EJECUCIÓN <====================
