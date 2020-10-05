@@ -122,26 +122,26 @@ tk_operadores = tk_menorQ+tk_mayorQ+tk_igual + \
     tk_menor_igual+tk_mayor_igual+tk_no_igual
 
 dict_tokens = {
-    'tk_reservado': ["descripcion", []],
-    'tk_operador': ["descripcion", []],
-    'tk_archivo': ["descripcion", []],
-    'tk_parA': ["descripcion", []],
-    'tk_parB': ["descripcion", []],
-    'tk_menorQ': ["descripcion", []],
-    'tk_mayorQ': ["descripcion", []],
-    'tk_corchA': ["descripcion", []],
-    'tk_corchB': ["descripcion", []],
-    'tk_igual': ["descripcion", []],
-    'tk_coma': ["descripcion", []],
-    'tk_punto': ["descripcion", []],
-    'tk_scolon': ["descripcion", []],
-    'tk_guion': ["descripcion", []],
-    'tk_asterisco': ["descripcion", []],
-    'tk_comilla': ["descripcion", []],
-    'tk_numero': ["descripcion", []],
-    'tk_cadena': ["descripcion", []],
-    'tk_booleano': ["descripcion", []],
-    'tk_color': ["descripcion", []]
+    'tk_reservado': ["Se trata de palabras reservadas por SimpleSQL CLI", []],
+    'tk_operador': ["Se trata de operadores lógicos usados para la conjunción de comparaciones", []],
+    'tk_archivo': ["Se trata de palabras reconocidas como archivos", []],
+    'tk_parA': ["Se trata de la apertura de un paréntesis", []],
+    'tk_parB': ["Se trata del cierre de un paréntesis", []],
+    'tk_menorQ': ["Se trata de un signo 'menor', usado en la apertura de archivos AON", []],
+    'tk_mayorQ': ["Se trata de un signo 'mayor', usado en el cierre de archivos AON", []],
+    'tk_corchA': ["Se trata de la apertura de un corchete", []],
+    'tk_corchB': ["Se trata del cierre de un corchete", []],
+    'tk_igual': ["Se trata del signo 'igual', usado en la igualación de valores", []],
+    'tk_coma': ["Se trata del signo 'coma', usado en la selección de múltiples objetivos", []],
+    'tk_punto': ["Se trata del signo 'punto', usado en la representación de números con decimal", []],
+    'tk_scolon': ["Se trata del signo 'punto y coma' usado en la finalización de un comando", []],
+    'tk_guion': ["Se trata del signo 'guion' usado en la representación de números negativos", []],
+    'tk_asterisco': ["Se trata del signo 'asterisco' usado en la selección de todos los objetivos", []],
+    'tk_comilla': ["Se trata del signo 'comilla' usado en la representación de variables string", []],
+    'tk_numero': ["Se trata de cualquier número", []],
+    'tk_cadena': ["Se trata de cualquier variable string", []],
+    'tk_booleano': ["Se trata de una variable que acoge valores booleanos", []],
+    'tk_color': ["Se trata de una palabra que representa un color", []]
 }
 
 
@@ -1158,7 +1158,7 @@ def Report(lista_llaves, lista_tuplas):
         "<!DOCTYPE html>\n"
         + "<html>\n"
         + "    <head>\n"
-        + "        <title>Reporte de registros</title>\n"
+        + "        <title>Reporte</title>\n"
 
         + "    <link rel='stylesheet' type='text/css' href='style.css'/>\n"
         + "    </head>\n"
