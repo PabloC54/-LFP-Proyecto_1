@@ -780,7 +780,7 @@ def Use(nombre):
 
 
 def Select(lista_llaves, condicion, conjuncion):
-    print(lista_llaves, condicion, conjuncion)
+    
     global selected_set
     lista_tuplas, lista_final = [], []
     diccionario_prueba = {}
@@ -1253,6 +1253,7 @@ def SimpleSQL(Instruccion):
             query = input(Hcolor+" >> "+Cend+" " +
                           Cbegin).strip().lower() + " ; "+Cend
             word = ""
+            
 
         for char in query:
 
